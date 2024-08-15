@@ -54,8 +54,13 @@ namespace Firely.Fhir.Packages
                 OperatingSystem.OSX =>
                    Environment.GetEnvironmentVariable("HOME"),
 
-                _ => throw new Exception("Unknown OS")
+                _ => null,
             };
+
+            if (string.IsNullOrEmpty(path))
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            }
 
             return path == null ? throw new Exception("Cannot determine root path of operating system") : path;
         }
