@@ -17,11 +17,11 @@ namespace Firely.Fhir.Packages
     public static class FileIndexExtensions
     {
 
-        private static void add(this FileIndex index, PackageReference reference, CanonicalIndex cindex)
+        private static void add(this FileIndex index, PackageReference reference, CanonicalIndex cIndex)
         {
-            if (cindex.Files is not null)
+            if (cIndex.Files is not null)
             {
-                index.add(reference, cindex.Files);
+                index.add(reference, cIndex.Files);
             }
         }
 
@@ -40,9 +40,9 @@ namespace Firely.Fhir.Packages
             index.add(reference, idx);
         }
 
-        private static void add(this FileIndex index, PackageReference reference, IEnumerable<ResourceMetadata> cindex)
+        private static void add(this FileIndex index, PackageReference reference, IEnumerable<ResourceMetadata> cIndex)
         {
-            foreach (var item in cindex)
+            foreach (var item in cIndex)
             {
                 index.Add(reference, item);
             }

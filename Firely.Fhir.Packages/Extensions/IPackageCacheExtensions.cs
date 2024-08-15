@@ -56,9 +56,9 @@ namespace Firely.Fhir.Packages
             return refs.Where(r => string.Compare(r.Name, name, ignoreCase: true) == 0);
         }
 
-        //public static IEnumerable<PackageReference> GetInstalledVersions(this IPackageCache cache, string pkgname)
+        //public static IEnumerable<PackageReference> GetInstalledVersions(this IPackageCache cache, string pkgName)
         //{
-        //    return cache.GetPackageReferences().WithName(pkgname);
+        //    return cache.GetPackageReferences().WithName(pkgName);
         //}
 
         /// <summary>

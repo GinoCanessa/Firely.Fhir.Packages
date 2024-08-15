@@ -47,9 +47,9 @@ namespace Firely.Fhir.Packages
         public string Moniker => $"{Name}@{Version}";
 
         /// <summary>
-        /// Returns the package name and version devided by an at @ sign respresented as a single string
+        /// Returns the package name and version divided by an at @ sign represented as a single string
         /// </summary>
-        /// <returns>Returns the package name and version devided by an at @ sign respresented as a single string</returns>
+        /// <returns>Returns the package name and version divided by an at @ sign represented as a single string</returns>
         public override string ToString()
         {
             string s = $"{Name}@{Version}";
@@ -141,9 +141,9 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Returns the hashcode of a package based on the name and version
+        /// Returns the hash code of a package based on the name and version
         /// </summary>
-        /// <returns>the hashcode of a package based on the name and version</returns>
+        /// <returns>the hash code of a package based on the name and version</returns>
         public override int GetHashCode()
         {
             return (Name, Version).GetHashCode();

@@ -64,7 +64,7 @@ namespace Firely.Fhir.Packages
         public string? Description;
 
         /// <summary>
-        /// The dist sub document conforms to NPM 7, providing a shasum and tarball 
+        /// The dist sub document conforms to NPM 7, providing a SHA sum and tarball 
         /// </summary>
         [JsonProperty(PropertyName = "dist")]
         public Dist? Dist;
@@ -114,7 +114,7 @@ namespace Firely.Fhir.Packages
     public class PackageManifest
     {
         /// <summary>
-        /// Initialize a new packagemanifest
+        /// Initialize a new package manifest
         /// </summary>
         /// <param name="name">Package name </param>
         /// <param name="version">Version of the package</param>
@@ -439,26 +439,26 @@ namespace Firely.Fhir.Packages
         /// Instantiates a new metadata entry for .firely.index.json
         /// </summary>
         /// <param name="filename">name of the file</param>
-        /// <param name="filepath">File path relative to the root folder including the file name</param>
-        public ResourceMetadata(string filename, string filepath) : base(filename)
+        /// <param name="filePath">File path relative to the root folder including the file name</param>
+        public ResourceMetadata(string filename, string filePath) : base(filename)
         {
             FileName = filename;
-            FilePath = filepath;
+            FilePath = filePath;
         }
 
         /// <summary>
         /// Instantiates a new metadata entry for .firely.index.json
         /// </summary>
-        /// <param name="filepath">File path relative to the root folder including the file name</param>
+        /// <param name="filePath">File path relative to the root folder including the file name</param>
         [JsonConstructor]
-        public ResourceMetadata(string filepath) : base(Path.GetFileName(filepath))
+        public ResourceMetadata(string filePath) : base(Path.GetFileName(filePath))
         {
-            FileName = Path.GetFileName(filepath);
-            FilePath = filepath;
+            FileName = Path.GetFileName(filePath);
+            FilePath = filePath;
         }
 
         /// <summary>
-        /// Relative filepath of a file to the package root.
+        /// Relative file path of a file to the package root.
         /// </summary>
         [JsonProperty("filepath", Required = Required.Always)]
         public string FilePath;
@@ -595,15 +595,15 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Adds a package dependendy to this manifest
+        /// Adds a package dependency to this manifest
         /// </summary>
         /// <param name="manifest"></param>
         /// <param name="name">Name of the dependency</param>
         /// <param name="name">Version of the dependency</param>
         public static void AddDependency(this PackageManifest manifest, string name, string? version)
         {
-            if (version is null) version = "latest";
-            if (manifest.Dependencies is null) manifest.Dependencies = new Dictionary<string, string?>();
+            version ??= "latest";
+            manifest.Dependencies ??= new Dictionary<string, string?>();
             if (!manifest.Dependencies.ContainsKey(name))
             {
                 manifest.Dependencies.Add(name, version);
@@ -615,7 +615,7 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Adds a package dependendy to this manifest
+        /// Adds a package dependency to this manifest
         /// </summary>
         /// <param name="manifest"></param>
         /// <param name="dependency">Package dependency</param>
@@ -639,16 +639,16 @@ namespace Firely.Fhir.Packages
         /// Check whether a package has a specific dependency
         /// </summary>
         /// <param name="manifest">The manifest of the package to be checked</param>
-        /// <param name="pkgname">The name of the dependency to be checked for</param>
+        /// <param name="pkgName">The name of the dependency to be checked for</param>
         /// <returns>Whether a package has a specific dependency</returns>
-        public static bool HasDependency(this PackageManifest manifest, string pkgname)
+        public static bool HasDependency(this PackageManifest manifest, string pkgName)
         {
             if (manifest?.Dependencies?.Keys is null)
                 return false;
 
             foreach (var key in manifest.Dependencies.Keys)
             {
-                if (string.Compare(key, pkgname, ignoreCase: true) == 0)
+                if (string.Compare(key, pkgName, ignoreCase: true) == 0)
                 {
                     return true;
                 }
@@ -660,16 +660,16 @@ namespace Firely.Fhir.Packages
         /// Remove a specific dependency
         /// </summary>
         /// <param name="manifest">The manifest of the package the dependency is to be removed from</param>
-        /// <param name="pkgname">The name of the dependency to be removed</param>
+        /// <param name="pkgName">The name of the dependency to be removed</param>
         /// <returns>Whether the dependency has been removed</returns>
-        public static bool RemoveDependency(this PackageManifest manifest, string pkgname)
+        public static bool RemoveDependency(this PackageManifest manifest, string pkgName)
         {
             if (manifest?.Dependencies?.Keys is null)
                 return false;
 
             foreach (var key in manifest.Dependencies.Keys)
             {
-                if (string.Compare(key, pkgname, ignoreCase: true) == 0)
+                if (string.Compare(key, pkgName, ignoreCase: true) == 0)
                 {
                     manifest.Dependencies.Remove(key);
                     return true;
@@ -713,7 +713,7 @@ namespace Firely.Fhir.Packages
         public string? Url;
 
         /// <summary>
-        /// The npm specification allows author information to be serialized in json as a single string, or as a complext object. 
+        /// The npm specification allows author information to be serialized in json as a single string, or as a complex object. 
         /// This boolean keeps track of it was parsed from either one, so it can be serialized to the same output again.
         /// </summary>
         /// See issue: https://github.com/FirelyTeam/Firely.Fhir.Packages/issues/94

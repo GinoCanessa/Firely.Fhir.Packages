@@ -42,12 +42,13 @@ namespace Firely.Fhir.Packages
         /// <param name="scope"></param>
         /// <param name="name">Name of the package</param>
         /// <param name="range">Version range</param>
-        /// <returns>Paxckage reference of the installed package</returns>
+        /// <returns>Package reference of the installed package</returns>
         public static async Task<PackageReference> Install(this PackageContext scope, string name, string range)
         {
             var dependency = new PackageDependency(name, range);
             return await scope.CacheInstall(dependency).ConfigureAwait(false);
         }
+
         /// <summary>
         /// Retrieve file content from a package by canonical uri
         /// </summary>
@@ -130,7 +131,7 @@ namespace Firely.Fhir.Packages
         /// Installs a package
         /// </summary>
         /// <param name="scope"></param>
-        /// <param name="dependency">Package dependendies</param>
+        /// <param name="dependency">Package dependencies</param>
         /// <returns>Install result</returns>
         /// <exception cref="Exception">Exception thrown when a dependency can't be found</exception>
         public static async Task<InstallResult> Install(this PackageContext scope, PackageDependency dependency)
@@ -178,15 +179,13 @@ namespace Firely.Fhir.Packages
             return scope.GetIndex().Select(i => i.FileName);
         }
 
-        /// <summary>
-        /// Returns the content of a file, represented as string by filepath
-        /// </summary>
-        /// <param name="scope">The package containing the resources</param>
-        /// <param name="filePath">Filepath of the content to be returned</param>
-        /// <returns>the content of a file, represented as string by filepath</returns>
-        public static async Task<string?> GetFileContentByFileName(this PackageContext scope, string fileName)
+        /// <summary>Returns the content of a file, represented as string by file path.</summary>
+        /// <param name="scope">   The package containing the resources.</param>
+        /// <param name="filename">File path of the content to be returned.</param>
+        /// <returns>the content of a file, represented as string by file path.</returns>
+        public static async Task<string?> GetFileContentByFileName(this PackageContext scope, string filename)
         {
-            var reference = scope.GetIndex().Where(i => i.FileName == fileName).FirstOrDefault();
+            var reference = scope.GetIndex().Where(i => i.FileName == filename).FirstOrDefault();
             if (reference is null) return null;
 
             var content = await scope.GetFileContent(reference).ConfigureAwait(false);
@@ -194,11 +193,11 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Returns the content of a file, represented as string by filepath
+        /// Returns the content of a file, represented as string by file path
         /// </summary>
         /// <param name="scope">The package containing the resources</param>
-        /// <param name="filePath">Filepath of the content to be returned</param>
-        /// <returns>the content of a file, represented as string by filepath</returns>
+        /// <param name="filePath">File path of the content to be returned</param>
+        /// <returns>the content of a file, represented as string by file path</returns>
         public static async Task<string?> GetFileContentByFilePath(this PackageContext scope, string filePath)
         {
             var reference = scope.GetIndex().Where(i => i.FilePath == filePath).FirstOrDefault();
@@ -237,7 +236,7 @@ namespace Firely.Fhir.Packages
 
 
         /// <summary>
-        /// Find a CodeSystem resource by a ValueSet canonical url that contains all codes from that codesystem.
+        /// Find a CodeSystem resource by a ValueSet canonical url that contains all codes from that CodeSystem.
         /// </summary>
         /// <param name="scope">The package context in which to find the CodeSystem</param>
         /// <param name="valueSetUri">The canonical uri of a ValueSet resource.</param>

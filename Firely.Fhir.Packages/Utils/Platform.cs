@@ -57,7 +57,7 @@ namespace Firely.Fhir.Packages
                 _ => throw new Exception("Unknown OS")
             };
 
-            return path == null ? throw new Exception("Cannot determine rootpath of operating system") : path;
+            return path == null ? throw new Exception("Cannot determine root path of operating system") : path;
         }
 
         /// <summary>

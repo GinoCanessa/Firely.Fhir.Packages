@@ -16,7 +16,7 @@ namespace Firely.Fhir.Packages
 {
     internal static class Helpers
     {
-        // Missing in netstandard.
+        // Missing in NetStandard.
         internal static string[] Split(this string s, string separator)
         {
             return s.Split(new string[] { separator }, StringSplitOptions.None);

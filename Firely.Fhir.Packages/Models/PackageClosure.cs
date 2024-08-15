@@ -77,14 +77,14 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Find a package name in the lock file
         /// </summary>
-        /// <param name="pkgname">package name to be found</param>
+        /// <param name="pkgName">package name to be found</param>
         /// <param name="reference">package reference of the found package</param>
         /// <returns>whether the package was found</returns>
-        public bool Find(string? pkgname, out PackageReference reference)
+        public bool Find(string? pkgName, out PackageReference reference)
         {
             foreach (var refx in References)
             {
-                if (string.Compare(refx.Name, pkgname, ignoreCase: true) == 0)
+                if (string.Compare(refx.Name, pkgName, ignoreCase: true) == 0)
                 {
                     reference = refx;
                     return true;

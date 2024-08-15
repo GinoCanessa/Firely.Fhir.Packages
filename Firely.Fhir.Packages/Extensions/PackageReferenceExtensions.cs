@@ -42,7 +42,7 @@ namespace Firely.Fhir.Packages
 
             foreach (var item in dict)
             {
-                list.Add(item); // implicit converion
+                list.Add(item); // implicit conversion
             }
             return list;
         }
@@ -52,7 +52,7 @@ namespace Firely.Fhir.Packages
             var list = new List<PackageDependency>();
             foreach (var item in dict)
             {
-                list.Add(item); // implicit converion
+                list.Add(item); // implicit conversion
             }
             return list;
         }

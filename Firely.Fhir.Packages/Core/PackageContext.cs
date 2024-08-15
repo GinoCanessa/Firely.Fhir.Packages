@@ -34,7 +34,7 @@ namespace Firely.Fhir.Packages
         /// <param name="cache">The cache from where to reference packages and consume dependency resources</param>
         /// <param name="project">The project or main package at the root of a dependency tree</param>
         /// <param name="server">The server from where to install packages into the cache</param>
-        /// <param name="onInstalled">Event that responds to succesfull package installs</param>
+        /// <param name="onInstalled">Event that responds to successful package installs</param>
         public PackageContext(IPackageCache cache, IProject project, IPackageServer? server, Action<PackageReference>? onInstalled = null)
         {
             this.Cache = cache;

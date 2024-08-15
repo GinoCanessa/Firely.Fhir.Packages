@@ -22,7 +22,7 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// FHIR Package URL provider, to determine and create correct package URLs
         /// </summary>
-        /// <param name="root">Paclage root path</param>
+        /// <param name="root">Package root path</param>
         public FhirPackageUrlProvider(string root)
         {
             this.Root = root.TrimEnd('/');

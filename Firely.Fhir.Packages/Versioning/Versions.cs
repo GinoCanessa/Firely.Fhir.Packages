@@ -90,7 +90,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="s">string to be parsed</param>
         /// <param name="v">Semver version object</param>
-        /// <returns>Whether the string was succesfully parsed to a SemVer version object</returns>
+        /// <returns>Whether the string was successfully parsed to a SemVer version object</returns>
         [System.Obsolete("Use Version.TryParse() instead")]
         [System.CLSCompliant(false)]
         public static bool TryParseVersion(string s, out Version? v)
@@ -124,7 +124,7 @@ namespace Firely.Fhir.Packages
 
 
         /// <summary>
-        /// Resolve the best mathing version from a range
+        /// Resolve the best matching version from a range
         /// </summary>
         /// <param name="range">Range of versions to be used during the resolving</param>
         /// <param name="stable">Indication of allowing only non-preview versions</param>
@@ -148,7 +148,7 @@ namespace Firely.Fhir.Packages
 
 
         /// <summary>
-        /// Resolve the best mathing version from a range
+        /// Resolve the best matching version from a range
         /// </summary>
         /// <param name="range">Range of versions to be used during the resolving</param>
         /// <returns>Semver Version object if the best matching version</returns>
@@ -167,7 +167,7 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Check whether the list of SemVer version objects contains a specific version    
         /// </summary>
-        /// <param name="version">verison to be checked for</param>
+        /// <param name="version">version to be checked for</param>
         /// <returns>Whether the list of SemVer version objects contains a specific version</returns>
         [System.CLSCompliant(false)]
         public bool Has(Version version)

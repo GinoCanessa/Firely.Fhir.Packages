@@ -82,15 +82,15 @@ namespace Firely.Fhir.Packages
         /// <returns>The package folder path</returns>
         public string PackageContentFolder(PackageReference reference)
         {
-            var pkgfolder = packageFolderName(reference);
-            var folder = Path.Combine(Root, pkgfolder, PackageFileNames.PACKAGEFOLDER);
+            var pkgFolder = packageFolderName(reference);
+            var folder = Path.Combine(Root, pkgFolder, PackageFileNames.PACKAGEFOLDER);
             return folder;
         }
 
         private string packageRootFolder(PackageReference reference)
         {
-            var pkgfolder = packageFolderName(reference);
-            string target = Path.Combine(Root, pkgfolder);
+            var pkgFolder = packageFolderName(reference);
+            string target = Path.Combine(Root, pkgFolder);
             return target;
         }
 
@@ -109,7 +109,7 @@ namespace Firely.Fhir.Packages
 
                 if (isValidPackageFolder(name))
                 {
-                    var reference = parseFoldernameToReference(name);
+                    var reference = parseFolderNameToReference(name);
                     references.Add(reference);
                 }
             }
@@ -118,19 +118,19 @@ namespace Firely.Fhir.Packages
         }
 
         //check whether the folder name has contains a single # sign which is not at the beginning or the end.
-        string pattern = @"^[^#]+#[^#]+$";
+        private string pattern = @"^[^#]+#[^#]+$";
 
         private bool isValidPackageFolder(string folderName) => Regex.IsMatch(folderName, pattern);
 
 
-        private static PackageReference parseFoldernameToReference(string foldername)
+        private static PackageReference parseFolderNameToReference(string folderName)
         {
-            var idx = foldername.IndexOf('#');
+            var idx = folderName.IndexOf('#');
 
             return new PackageReference
             {
-                Name = foldername.Substring(0, idx),
-                Version = foldername.Substring(idx + 1)
+                Name = folderName.Substring(0, idx),
+                Version = folderName.Substring(idx + 1)
             };
         }
 
@@ -167,12 +167,12 @@ namespace Firely.Fhir.Packages
         public async Task<Versions?> GetVersions(string name)
         {
             var references = await GetPackageReferences();
-            var vlist = references.Where(r => r.Name == name).Select(r => r.Version);
+            var vList = references.Where(r => r.Name == name).Select(r => r.Version);
 
-            if (vlist == null || !vlist.Any())
+            if (vList == null || !vList.Any())
                 return null;
 
-            var versions = new Versions(vlist!);
+            var versions = new Versions(vList!);
 
             return versions;
         }

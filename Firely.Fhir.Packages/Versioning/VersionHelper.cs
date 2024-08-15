@@ -43,7 +43,7 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Retuns version information based on this list of package references
+        /// Returns version information based on this list of package references
         /// </summary>
         /// <param name="references"></param>
         /// <returns>A list of package versions</returns>
@@ -81,10 +81,10 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// A boolean cheching if this <see cref="Versions"/> object contains a specific version 
+        /// A boolean checking if this <see cref="Versions"/> object contains a specific version 
         /// </summary>
         /// <param name="versions"></param>
-        /// <param name="version">Soecific version to be checked</param>
+        /// <param name="version">Specific version to be checked</param>
         /// <returns>Whether of not a specific version is present in the <see cref="Versions"/> object </returns>
         public static bool Has(this Versions versions, string version)
         {

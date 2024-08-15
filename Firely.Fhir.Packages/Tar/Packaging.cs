@@ -67,7 +67,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="name">Name of the newly created package</param>
         /// <param name="folder">Path of the folder to be packaged</param>
-        /// <param name="organize">Add a custome folder organization structure for your package</param>
+        /// <param name="organize">Add a custom folder organization structure for your package</param>
         /// <returns>Path of the newly created package</returns>
         public static string PackFolder(string name, string folder, Func<FileEntry, FileEntry> organize)
         {

@@ -51,7 +51,7 @@ namespace Firely.Fhir.Packages
 
             await restoreManifest(manifest, errors, new Stack<PackageDependency>()).ConfigureAwait(false);
 
-            if (errors.Any())
+            if (errors.Count != 0)
                 throw new AggregateException(errors);
 
             await SaveClosure().ConfigureAwait(false);

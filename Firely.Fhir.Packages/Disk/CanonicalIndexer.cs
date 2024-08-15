@@ -37,8 +37,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         public static CanonicalIndex Append(this CanonicalIndex index, IEnumerable<ResourceMetadata> entries)
         {
-            if (index.Files == null)
-                index.Files = new();
+            index.Files ??= new();
 
             index.Files.AddRange(entries);
             return index;
@@ -58,8 +57,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         public static IndexJson Append(this IndexJson index, IEnumerable<IndexData> entries)
         {
-            if (index.Files == null)
-                index.Files = new();
+            index.Files ??= new();
 
             index.Files.AddRange(entries);
             return index;
@@ -78,16 +76,16 @@ namespace Firely.Fhir.Packages
             return enumerateMetadata(folder, paths).ToList();
         }
 
-        private static IEnumerable<ResourceMetadata> enumerateMetadata(string folder, IEnumerable<string> filepaths)
+        private static IEnumerable<ResourceMetadata> enumerateMetadata(string folder, IEnumerable<string> filePaths)
         {
-            return filepaths.Select(p => getFileMetadata(folder, p)).Where(p => p is not null);
+            return filePaths.Select(p => getFileMetadata(folder, p)).Where(p => p is not null);
         }
 
-        private static ResourceMetadata getFileMetadata(string folder, string filepath)
+        private static ResourceMetadata getFileMetadata(string folder, string filePath)
         {
-            return FhirParser.TryParseToSourceNode(filepath, out var node)
-                    ? BuildResourceMetadata(getRelativePath(folder, filepath), node!)
-                    : new ResourceMetadata(filename: Path.GetFileName(filepath), filepath: getRelativePath(folder, filepath));
+            return FhirParser.TryParseToSourceNode(filePath, out var node)
+                    ? BuildResourceMetadata(getRelativePath(folder, filePath), node!)
+                    : new ResourceMetadata(filename: Path.GetFileName(filePath), filePath: getRelativePath(folder, filePath));
         }
 
         internal static IEnumerable<IndexData> GenerateIndexFile(IEnumerable<FileEntry> entries)
@@ -105,12 +103,12 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Builds Firely specific metadata for a Package File Index for a single file.
         /// </summary>
-        /// <param name="filepath">relative path of the file</param>
+        /// <param name="filePath">relative path of the file</param>
         /// <param name="resource">Resource to be indexed</param>
         /// <returns>An entry to .firely.index.json</returns>
-        public static ResourceMetadata BuildResourceMetadata(string filepath, ISourceNode resource)
+        public static ResourceMetadata BuildResourceMetadata(string filePath, ISourceNode resource)
         {
-            return new ResourceMetadata(filename: Path.GetFileName(filepath), filepath: filepath)
+            return new ResourceMetadata(filename: Path.GetFileName(filePath), filePath: filePath)
             {
                 ResourceType = resource?.Name,
                 Id = resource?.getString("id"),
@@ -150,8 +148,8 @@ namespace Firely.Fhir.Packages
         private static string? getString(this ISourceNode node, string expression)
         {
             if (node is null) return null;
-            var decendant = node.findFirstDescendant(expression);
-            return decendant?.Text;
+            var descendant = node.findFirstDescendant(expression);
+            return descendant?.Text;
         }
 
         private static IEnumerable<string> getRelativePaths(string folder, IEnumerable<string> paths)

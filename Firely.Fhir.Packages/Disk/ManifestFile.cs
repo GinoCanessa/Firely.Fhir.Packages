@@ -152,8 +152,8 @@ namespace Firely.Fhir.Packages
         /// <returns>whether a package name is valid  </returns>
         public static bool ValidPackageName(string name)
         {
-            char[] invalidchars = new char[] { '/', '\\' };
-            int i = name.IndexOfAny(invalidchars);
+            char[] invalidChars = new char[] { '/', '\\' };
+            int i = name.IndexOfAny(invalidChars);
             bool valid = i == -1;
             return valid;
         }

@@ -16,7 +16,7 @@ namespace Firely.Fhir.Packages
     using System.Text;
     using System.Threading.Tasks;
 
-    /// <summary>Reads FHIR artifacts (Profiles, ValueSets, ...) from one or multiple FHIR packages. This functionaly is FHIR version agnostic.</summary>
+    /// <summary>Reads FHIR artifacts (Profiles, ValueSets, ...) from one or multiple FHIR packages. This functionally is FHIR version agnostic.</summary>
     public class FhirPackageSource : IAsyncResourceResolver, IArtifactSource
     {
         private Lazy<PackageContext> _context;
@@ -25,7 +25,7 @@ namespace Firely.Fhir.Packages
         /// <summary>Create a new <see cref="FhirPackageSource"/> instance to read FHIR artifacts from one or multiple FHIR packages of a specific FHIR version
         /// found in the paths passed to this function.</summary>
         /// <returns>A new <see cref="FhirPackageSource"/> instance.</returns>
-        /// <param name="provider">A <see cref="ModelInspector"/> used to parse the filecontents to FHIR resources, this is typically a <see cref="ModelInspector"/> containing the definitions of a specific FHIR version. </param>
+        /// <param name="provider">A <see cref="ModelInspector"/> used to parse the file contents to FHIR resources, this is typically a <see cref="ModelInspector"/> containing the definitions of a specific FHIR version. </param>
         /// <param name="filePaths">A path to the FHIR package files.</param>
         public FhirPackageSource(ModelInspector provider, params string[] filePaths)
         {
@@ -77,7 +77,7 @@ namespace Firely.Fhir.Packages
                 Description = description,
             };
 
-            if (dependencies?.Any() == true)
+            if (dependencies?.Length > 0)
             {
                 var packageDependencies = createDependencies(dependencies);
                 foreach (var packageDep in packageDependencies) manifest.AddDependency(packageDep);
@@ -129,14 +129,14 @@ namespace Firely.Fhir.Packages
             {
                 var closure = await scope.Restore();
 
-                if (closure.Missing.Any())
+                if (closure.Missing.Count > 0)
                 {
                     var missingDeps = string.Join(", ", closure.Missing);
                     throw new FileNotFoundException($"Could not resolve all dependencies. Missing: {missingDeps}.");
                 }
             }
             //install packages from local machine
-            if (filePaths is not null && filePaths.Any())
+            if (filePaths?.Length > 0)
             {
                 foreach (var path in filePaths)
                 {

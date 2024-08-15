@@ -39,8 +39,8 @@ namespace Firely.Fhir.Packages
     {
         public static bool TryParse(string value, out PackageManifestType type)
         {
-            string typestr = value.Replace("-", "");
-            bool ok = Enum.TryParse(typestr, ignoreCase: true, out type);
+            string typeStr = value.Replace("-", "");
+            bool ok = Enum.TryParse(typeStr, ignoreCase: true, out type);
             return ok;
         }
 
