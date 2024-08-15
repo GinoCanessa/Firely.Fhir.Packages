@@ -48,6 +48,15 @@ namespace Firely.Fhir.Packages
         {
             return pattern.StartsWith("http");
         }
+
+#if NETSTANDARD2_0
+        internal static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> kvp, out TKey key, out TValue value)
+        {
+            key = kvp.Key;
+            value = kvp.Value;
+        }
+#endif
+
     }
 }
 
