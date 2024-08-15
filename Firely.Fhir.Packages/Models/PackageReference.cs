@@ -173,6 +173,13 @@ namespace Firely.Fhir.Packages
             }
 
             var parts = reference.Split("@"); // name@version
+
+            // check for FHIR-style references
+            if ((parts.Length == 1) && reference.Contains("#"))
+            {
+                parts = reference.Split("#");
+            }
+
             string name = parts[0];
             if (parts.Length > 1) version = parts[1];
             return (scope, name, version);
