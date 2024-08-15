@@ -9,6 +9,10 @@
 
 #nullable enable
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Firely.Fhir.Packages
@@ -52,6 +56,35 @@ namespace Firely.Fhir.Packages
             var versions = await server.GetVersions(name);
             var version = versions?.Latest(stable)?.ToString();
             return version is null ? PackageReference.None : new PackageReference(name, version);
+        }
+
+        /// <summary>Get latest version of a certain package from a collection of servers.</summary>
+        /// <param name="servers">.</param>
+        /// <param name="name">   Package name.</param>
+        /// <param name="stable"> (Optional) Indication of allowing only non-preview versions.</param>
+        /// <returns>The package reference of the highest 'latest' version of the package and the server it was found on.</returns>
+        public static async ValueTask<(PackageReference, IPackageServer?)> GetLatest(this IEnumerable<IPackageServer> servers, string name, bool stable = false)
+        {
+            ConcurrentBag<(string, IPackageServer)> foundVersions = new ConcurrentBag<(string, IPackageServer)>();
+
+            IEnumerable<Task> tasks = servers.Select(async server =>
+            {
+                var versions = await server.GetVersions(name);
+                var version = versions?.Latest(stable)?.ToString();
+                if (version != null)
+                    foundVersions.Append((version, server));
+            });
+
+            await Task.WhenAll(tasks);
+
+            if (foundVersions.Count == 0)
+            {
+                return (PackageReference.None, null);
+            }
+
+            (string highVersion, IPackageServer matchingServer) = foundVersions.OrderByDescending(v => v.Item1).First();
+
+            return (new PackageReference(name, highVersion), matchingServer);
         }
 
         /// <summary>
