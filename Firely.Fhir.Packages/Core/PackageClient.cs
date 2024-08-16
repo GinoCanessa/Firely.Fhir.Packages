@@ -34,7 +34,6 @@ namespace Firely.Fhir.Packages
             var httpClient = insecure ? Testing.GetInsecureClient() : new HttpClient();
 
             return new PackageClient(urlProvider, httpClient);
-
         }
 
         /// <summary>

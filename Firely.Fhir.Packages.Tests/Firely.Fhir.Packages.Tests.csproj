@@ -3,9 +3,18 @@
   <Import Project="..\Firely.Fhir.Packages.Tests.props" />
 
 	<ItemGroup>
-		<Content Include="TestData\**\*.xml;TestData\**\*.json;TestData\testPackage.tgz">
+		<Content Include="TestData\**\*.xml;TestData\**\*.json;TestData\testPackage.tgz;">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Remove="TestData\ci\qas-backport.json" />
+	  <None Remove="TestData\ci\qas-full.json" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="System.Net.Http" Version="4.3.4" />
 	</ItemGroup>
 	
   <ItemGroup>

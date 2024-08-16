@@ -873,6 +873,43 @@ namespace Firely.Fhir.Packages
         }
 
     }
+
+    /// <summary>FHIR QA record from the CI server.</summary>
+    public class FhirCiQaRecord
+    {
+        [JsonProperty(PropertyName = "url")]
+        public string? Url { get; set; }
+
+        [JsonProperty(PropertyName = "name")]
+        public string? Name { get; set; }
+
+        [JsonProperty(PropertyName = "package-id")]
+        public string? PackageId { get; set; }
+
+        [JsonProperty(PropertyName = "ig-ver")]
+        public string? GuideVersion { get; set; }
+
+        [JsonProperty(PropertyName = "date")]
+        public string? BuildDate { get; set; }
+
+        [JsonProperty(PropertyName = "errs")]
+        public int? ErrorCount { get; set; }
+
+        [JsonProperty(PropertyName = "warnings")]
+        public int? WarningCount { get; set; }
+
+        [JsonProperty(PropertyName = "hints")]
+        public int? HintCount { get; set; }
+
+        [JsonProperty(PropertyName = "version")]
+        public string? FhirVersion { get; set; }
+
+        [JsonProperty(PropertyName = "tool")]
+        public string? ToolingVersion { get; set; }
+
+        [JsonProperty(PropertyName = "repo")]
+        public string? RepositoryUrl { get; set; }
+    }
 }
 
 #nullable restore
