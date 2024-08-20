@@ -82,15 +82,15 @@ namespace Firely.Fhir.Packages
         /// <returns>The package folder path</returns>
         public string PackageContentFolder(PackageReference reference)
         {
-            var pkgFolder = packageFolderName(reference);
-            var folder = Path.Combine(Root, pkgFolder, PackageFileNames.PACKAGEFOLDER);
+            var pkgfolder = packageFolderName(reference);
+            var folder = Path.Combine(Root, pkgfolder, PackageFileNames.PACKAGEFOLDER);
             return folder;
         }
 
         private string packageRootFolder(PackageReference reference)
         {
-            var pkgFolder = packageFolderName(reference);
-            string target = Path.Combine(Root, pkgFolder);
+            var pkgfolder = packageFolderName(reference);
+            string target = Path.Combine(Root, pkgfolder);
             return target;
         }
 
@@ -123,14 +123,14 @@ namespace Firely.Fhir.Packages
         private bool isValidPackageFolder(string folderName) => Regex.IsMatch(folderName, pattern);
 
 
-        private static PackageReference parseFolderNameToReference(string folderName)
+        private static PackageReference parseFolderNameToReference(string foldername)
         {
-            var idx = folderName.IndexOf('#');
+            var idx = foldername.IndexOf('#');
 
             return new PackageReference
             {
-                Name = folderName.Substring(0, idx),
-                Version = folderName.Substring(idx + 1)
+                Name = foldername.Substring(0, idx),
+                Version = foldername.Substring(idx + 1)
             };
         }
 
@@ -167,12 +167,12 @@ namespace Firely.Fhir.Packages
         public async Task<Versions?> GetVersions(string name)
         {
             var references = await GetPackageReferences();
-            var vList = references.Where(r => r.Name == name).Select(r => r.Version);
+            var vlist = references.Where(r => r.Name == name).Select(r => r.Version);
 
-            if (vList == null || !vList.Any())
+            if (vlist == null || !vlist.Any())
                 return null;
 
-            var versions = new Versions(vList!);
+            var versions = new Versions(vlist!);
 
             return versions;
         }

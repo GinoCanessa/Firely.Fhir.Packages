@@ -76,16 +76,16 @@ namespace Firely.Fhir.Packages
             return enumerateMetadata(folder, paths).ToList();
         }
 
-        private static IEnumerable<ResourceMetadata> enumerateMetadata(string folder, IEnumerable<string> filePaths)
+        private static IEnumerable<ResourceMetadata> enumerateMetadata(string folder, IEnumerable<string> filepaths)
         {
-            return filePaths.Select(p => getFileMetadata(folder, p)).Where(p => p is not null);
+            return filepaths.Select(p => getFileMetadata(folder, p)).Where(p => p is not null);
         }
 
-        private static ResourceMetadata getFileMetadata(string folder, string filePath)
+        private static ResourceMetadata getFileMetadata(string folder, string filepath)
         {
-            return FhirParser.TryParseToSourceNode(filePath, out var node)
-                    ? BuildResourceMetadata(getRelativePath(folder, filePath), node!)
-                    : new ResourceMetadata(filename: Path.GetFileName(filePath), filePath: getRelativePath(folder, filePath));
+            return FhirParser.TryParseToSourceNode(filepath, out var node)
+                    ? BuildResourceMetadata(getRelativePath(folder, filepath), node!)
+                    : new ResourceMetadata(filename: Path.GetFileName(filepath), filepath: getRelativePath(folder, filepath));
         }
 
         internal static IEnumerable<IndexData> GenerateIndexFile(IEnumerable<FileEntry> entries)
@@ -103,12 +103,12 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Builds Firely specific metadata for a Package File Index for a single file.
         /// </summary>
-        /// <param name="filePath">relative path of the file</param>
+        /// <param name="filepath">relative path of the file</param>
         /// <param name="resource">Resource to be indexed</param>
         /// <returns>An entry to .firely.index.json</returns>
-        public static ResourceMetadata BuildResourceMetadata(string filePath, ISourceNode resource)
+        public static ResourceMetadata BuildResourceMetadata(string filepath, ISourceNode resource)
         {
-            return new ResourceMetadata(filename: Path.GetFileName(filePath), filePath: filePath)
+            return new ResourceMetadata(filename: Path.GetFileName(filepath), filepath: filepath)
             {
                 ResourceType = resource?.Name,
                 Id = resource?.getString("id"),

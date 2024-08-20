@@ -22,29 +22,29 @@ namespace Firely.Fhir.Packages
     {
         internal static string PackToDisk(string path, IEnumerable<FileEntry> entries)
         {
-            var packageFile = Path.ChangeExtension(path, ".tgz");
+            var packagefile = Path.ChangeExtension(path, ".tgz");
 
-            using var file = File.Create(packageFile);
+            using var file = File.Create(packagefile);
             using var gzip = new GZipOutputStream(file);
             using TarOutputStream tar = new TarOutputStream(gzip, Encoding.Default);
 
             Write(tar, entries);
 
-            return packageFile;
+            return packagefile;
         }
 
         internal static string PackToDisk(string path, FileEntry single, IEnumerable<FileEntry> entries)
         {
-            var packageFile = Path.ChangeExtension(path, ".tgz");
+            var packagefile = Path.ChangeExtension(path, ".tgz");
 
-            using (var file = File.Create(packageFile))
+            using (var file = File.Create(packagefile))
             using (var gzip = new GZipOutputStream(file))
             using (TarOutputStream tar = new TarOutputStream(gzip, Encoding.Default))
             {
                 Write(tar, single);
                 Write(tar, entries);
             }
-            return packageFile;
+            return packagefile;
         }
 
         internal static byte[] Pack(FileEntry single, IEnumerable<FileEntry> entries)
@@ -122,9 +122,9 @@ namespace Firely.Fhir.Packages
             }
         }
 
-        internal static IEnumerable<FileEntry> ExtractMatchingFiles(string packageFile, string match)
+        internal static IEnumerable<FileEntry> ExtractMatchingFiles(string packagefile, string match)
         {
-            return ExtractFiles(packageFile, name => PathMatch(name, match));
+            return ExtractFiles(packagefile, name => PathMatch(name, match));
         }
 
         internal static bool PathMatch(string pathA, string pathB)

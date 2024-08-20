@@ -506,22 +506,22 @@ namespace Firely.Fhir.Packages
         /// Instantiates a new metadata entry for .firely.index.json
         /// </summary>
         /// <param name="filename">name of the file</param>
-        /// <param name="filePath">File path relative to the root folder including the file name</param>
-        public ResourceMetadata(string filename, string filePath) : base(filename)
+        /// <param name="filepath">File path relative to the root folder including the file name</param>
+        public ResourceMetadata(string filename, string filepath) : base(filename)
         {
             FileName = filename;
-            FilePath = filePath;
+            FilePath = filepath;
         }
 
         /// <summary>
         /// Instantiates a new metadata entry for .firely.index.json
         /// </summary>
-        /// <param name="filePath">File path relative to the root folder including the file name</param>
+        /// <param name="filepath">File path relative to the root folder including the file name</param>
         [JsonConstructor]
-        public ResourceMetadata(string filePath) : base(Path.GetFileName(filePath))
+        public ResourceMetadata(string filepath) : base(Path.GetFileName(filepath))
         {
-            FileName = Path.GetFileName(filePath);
-            FilePath = filePath;
+            FileName = Path.GetFileName(filepath);
+            FilePath = filepath;
         }
 
         /// <summary>
@@ -706,16 +706,16 @@ namespace Firely.Fhir.Packages
         /// Check whether a package has a specific dependency
         /// </summary>
         /// <param name="manifest">The manifest of the package to be checked</param>
-        /// <param name="pkgName">The name of the dependency to be checked for</param>
+        /// <param name="pkgname">The name of the dependency to be checked for</param>
         /// <returns>Whether a package has a specific dependency</returns>
-        public static bool HasDependency(this PackageManifest manifest, string pkgName)
+        public static bool HasDependency(this PackageManifest manifest, string pkgname)
         {
             if (manifest?.Dependencies?.Keys is null)
                 return false;
 
             foreach (var key in manifest.Dependencies.Keys)
             {
-                if (string.Compare(key, pkgName, ignoreCase: true) == 0)
+                if (string.Compare(key, pkgname, ignoreCase: true) == 0)
                 {
                     return true;
                 }
@@ -727,16 +727,16 @@ namespace Firely.Fhir.Packages
         /// Remove a specific dependency
         /// </summary>
         /// <param name="manifest">The manifest of the package the dependency is to be removed from</param>
-        /// <param name="pkgName">The name of the dependency to be removed</param>
+        /// <param name="pkgname">The name of the dependency to be removed</param>
         /// <returns>Whether the dependency has been removed</returns>
-        public static bool RemoveDependency(this PackageManifest manifest, string pkgName)
+        public static bool RemoveDependency(this PackageManifest manifest, string pkgname)
         {
             if (manifest?.Dependencies?.Keys is null)
                 return false;
 
             foreach (var key in manifest.Dependencies.Keys)
             {
-                if (string.Compare(key, pkgName, ignoreCase: true) == 0)
+                if (string.Compare(key, pkgname, ignoreCase: true) == 0)
                 {
                     manifest.Dependencies.Remove(key);
                     return true;

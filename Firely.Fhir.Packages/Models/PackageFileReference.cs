@@ -22,21 +22,21 @@ namespace Firely.Fhir.Packages
         /// Initialized a new <see cref="PackageFileReference"/>
         /// </summary>
         /// <param name="filename">Name of the file</param>
-        /// <param name="filePath">File path, relative to the package root</param>
-        public PackageFileReference(string filename, string filePath) : base(filename, filePath)
+        /// <param name="filepath">File path, relative to the package root</param>
+        public PackageFileReference(string filename, string filepath) : base(filename, filepath)
         {
             FileName = filename;
-            FilePath = filePath;
+            FilePath = filepath;
         }
 
         /// <summary>
         /// Initialized a new <see cref="PackageFileReference"/>
         /// </summary>
-        /// <param name="filePath">File path, relative to the package root</param>
-        public PackageFileReference(string filePath) : base(filePath)
+        /// <param name="filepath">File path, relative to the package root</param>
+        public PackageFileReference(string filepath) : base(filepath)
         {
-            FileName = Path.GetFileName(filePath);
-            FilePath = filePath;
+            FileName = Path.GetFileName(filepath);
+            FilePath = filepath;
         }
 
         /// <summary>

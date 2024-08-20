@@ -62,7 +62,7 @@ namespace Firely.Fhir.Packages
                 path = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             }
 
-            return path == null ? throw new Exception("Cannot determine root path of operating system") : path;
+            return path == null ? throw new Exception("Cannot determine rootpath of operating system") : path;
         }
 
         /// <summary>

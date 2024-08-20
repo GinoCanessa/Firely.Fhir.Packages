@@ -30,10 +30,10 @@ namespace Firely.Fhir.Packages
         /// <returns>A newly created package client</returns>
         public static PackageClient Create(string source, bool npm = false, bool insecure = false)
         {
-            var urlProvider = npm ? (IPackageUrlProvider)new NodePackageUrlProvider(source) : new FhirPackageUrlProvider(source);
+            var urlprovider = npm ? (IPackageUrlProvider)new NodePackageUrlProvider(source) : new FhirPackageUrlProvider(source);
             var httpClient = insecure ? Testing.GetInsecureClient() : new HttpClient();
 
-            return new PackageClient(urlProvider, httpClient);
+            return new PackageClient(urlprovider, httpClient);
         }
 
         /// <summary>
@@ -64,16 +64,16 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Download the raw json package listing
         /// </summary>
-        /// <param name="pkgName">Name of the package</param>
+        /// <param name="pkgname">Name of the package</param>
         /// <returns>Raw package listing in json format</returns>
-        public async ValueTask<string?> DownloadListingRawAsync(string? pkgName)
+        public async ValueTask<string?> DownloadListingRawAsync(string? pkgname)
         {
-            if (pkgName is null)
+            if (pkgname is null)
             {
                 return null;
             }
 
-            var url = _urlProvider.GetPackageListingUrl(pkgName);
+            var url = _urlProvider.GetPackageListingUrl(pkgname);
             try
             {
                 var response = await _httpClient.GetAsync(url).ConfigureAwait(false);
@@ -90,32 +90,32 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Download the package listing
         /// </summary>
-        /// <param name="pkgName">Name of the package</param>
+        /// <param name="pkgname">Name of the package</param>
         /// <returns>Package listing</returns>
-        public async ValueTask<PackageListing?> DownloadListingAsync(string pkgName)
+        public async ValueTask<PackageListing?> DownloadListingAsync(string pkgname)
         {
-            var body = await DownloadListingRawAsync(pkgName).ConfigureAwait(false);
+            var body = await DownloadListingRawAsync(pkgname).ConfigureAwait(false);
             return body is null ? null : PackageParser.Deserialize<PackageListing>(body);
         }
 
         /// <summary>
         /// Get a list of package catalogs, based on optional parameters
         /// </summary>
-        /// <param name="pkgName">Name of the package</param>
+        /// <param name="pkgname">Name of the package</param>
         /// <param name="canonical">the canonical url of an artifact that is in the package</param>
-        /// <param name="fhirVersion">the FHIR version of a package</param>
+        /// <param name="fhirversion">the FHIR version of a package</param>
         /// <param name="preview">allow for prelease packages</param>
         /// <returns>A list of package catalogs that conform to the parameters</returns>
         public async ValueTask<List<PackageCatalogEntry>> CatalogPackagesAsync(
-            string? pkgName = null,
+            string? pkgname = null,
             string? canonical = null,
-            string? fhirVersion = null,
+            string? fhirversion = null,
             bool preview = false)
         {
             var parameters = new NameValueCollection();
-            parameters.AddWhenValued("name", pkgName);
+            parameters.AddWhenValued("name", pkgname);
             parameters.AddWhenValued("canonical", canonical);
-            parameters.AddWhenValued("fhirversion", fhirVersion);
+            parameters.AddWhenValued("fhirversion", fhirversion);
             parameters.AddWhenValued("prerelease", preview ? "true" : "false");
             string query = parameters.ToQueryString();
 

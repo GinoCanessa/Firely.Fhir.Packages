@@ -20,9 +20,9 @@ namespace Firely.Fhir.Packages
     {
         public static IEnumerable<FileEntry> ReadFileEntries(string folder, string pattern)
         {
-            foreach (var filePath in Directory.GetFiles(folder, pattern))
+            foreach (var filepath in Directory.GetFiles(folder, pattern))
             {
-                yield return readFileEntry(filePath);
+                yield return readFileEntry(filepath);
             }
         }
 
@@ -72,10 +72,10 @@ namespace Firely.Fhir.Packages
             return entryList;
         }
 
-        private static FileEntry readFileEntry(string filePath)
+        private static FileEntry readFileEntry(string filepath)
         {
-            var buffer = File.ReadAllBytes(filePath);
-            var entry = new FileEntry(filePath, buffer);
+            var buffer = File.ReadAllBytes(filepath);
+            var entry = new FileEntry(filepath, buffer);
             return entry;
         }
 

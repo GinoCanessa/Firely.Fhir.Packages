@@ -67,22 +67,22 @@ namespace Firely.Fhir.Packages
         /// Initialize a package manifest 
         /// </summary>
         /// <param name="project"></param>
-        /// <param name="pkgName">Name of the package</param>
+        /// <param name="pkgname">Name of the package</param>
         /// <param name="version">Version of the package</param>
         /// <param name="fhirVersion">FhIr version</param>
         /// <returns></returns>
         /// <exception cref="Exception">Function throws an exception if a manifest file already exists, or if the package name is invalid</exception>
-        public static async Task Init(this IProject project, string pkgName, string version, string fhirVersion)
+        public static async Task Init(this IProject project, string pkgname, string version, string fhirVersion)
         {
             var manifest = await project.ReadManifest().ConfigureAwait(false);
 
             if (manifest != null)
                 throw new Exception($"A Package manifests already exists in this folder.");
 
-            if (!ManifestFile.ValidPackageName(pkgName))
-                throw new Exception($"Invalid package name {pkgName}");
+            if (!ManifestFile.ValidPackageName(pkgname))
+                throw new Exception($"Invalid package name {pkgname}");
 
-            manifest = ManifestFile.Create(pkgName, fhirVersion);
+            manifest = ManifestFile.Create(pkgname, fhirVersion);
             manifest.Version = version;
 
             await project.WriteManifest(manifest).ConfigureAwait(false);

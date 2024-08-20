@@ -28,7 +28,7 @@ namespace Firely.Fhir.Packages
         internal static async ValueTask<IList<string>> FindPackageByName(this PackageClient client, string partial)
         {
             // backwards compatibility
-            var result = await client.CatalogPackagesAsync(pkgName: partial).ConfigureAwait(false);
+            var result = await client.CatalogPackagesAsync(pkgname: partial).ConfigureAwait(false);
             return result.Where(c => c.Name is not null).Select(c => c.Name!).ToList();
         }
 

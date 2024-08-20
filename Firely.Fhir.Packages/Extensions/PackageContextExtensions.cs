@@ -181,11 +181,11 @@ namespace Firely.Fhir.Packages
 
         /// <summary>Returns the content of a file, represented as string by file path.</summary>
         /// <param name="scope">   The package containing the resources.</param>
-        /// <param name="filename">File path of the content to be returned.</param>
+        /// <param name="fileName">File path of the content to be returned.</param>
         /// <returns>the content of a file, represented as string by file path.</returns>
-        public static async Task<string?> GetFileContentByFileName(this PackageContext scope, string filename)
+        public static async Task<string?> GetFileContentByFileName(this PackageContext scope, string fileName)
         {
-            var reference = scope.GetIndex().Where(i => i.FileName == filename).FirstOrDefault();
+            var reference = scope.GetIndex().Where(i => i.FileName == fileName).FirstOrDefault();
             if (reference is null) return null;
 
             var content = await scope.GetFileContent(reference).ConfigureAwait(false);

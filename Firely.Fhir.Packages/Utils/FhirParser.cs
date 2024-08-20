@@ -32,16 +32,16 @@ namespace Firely.Fhir.Packages
             ValidateFhirXhtml = false
         };
 
-        internal static ISourceNode? ParseFileToSourceNode(string filePath)
+        internal static ISourceNode? ParseFileToSourceNode(string filepath)
         {
-            if (FhirFileFormats.HasXmlExtension(filePath))
+            if (FhirFileFormats.HasXmlExtension(filepath))
             {
-                return FhirXmlNode.Parse(File.ReadAllText(filePath), _xmlParsingSettings);
+                return FhirXmlNode.Parse(File.ReadAllText(filepath), _xmlParsingSettings);
             }
 
-            if (FhirFileFormats.HasJsonExtension(filePath) && !PackageFileNames.ALL_PACKAGE_FILENAMES.Contains(filePath.Split(Path.DirectorySeparatorChar).Last()))
+            if (FhirFileFormats.HasJsonExtension(filepath) && !PackageFileNames.ALL_PACKAGE_FILENAMES.Contains(filepath.Split(Path.DirectorySeparatorChar).Last()))
             {
-                var content = File.ReadAllText(filePath);
+                var content = File.ReadAllText(filepath);
                 return FhirJsonNode.Parse(content, null, _jsonParsingSettings);
             }
 
@@ -66,11 +66,11 @@ namespace Firely.Fhir.Packages
             return null;
         }
 
-        internal static bool TryParseToSourceNode(string filePath, out ISourceNode? node)
+        internal static bool TryParseToSourceNode(string filepath, out ISourceNode? node)
         {
             try
             {
-                node = ParseFileToSourceNode(filePath);
+                node = ParseFileToSourceNode(filepath);
                 if (node is null)
                 {
                     return false;
