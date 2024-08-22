@@ -31,25 +31,154 @@ namespace Firely.Fhir.Packages.Tests
         }
 
         [DataTestMethod]
-        [DataRow(null, null, null, 359)]                                // 359 distinct packages in qas-full.json
-        [DataRow("hl7.fhir.ca.baseline", null, null, 1)]
-        [DataRow(null, "http://hl7.org/fhir/ca/baseline", null, 1)]
-        [DataRow(null, null, "4.0.1", 293)]                             // 293 distinct packages in qas-full.json with FHIR version 4.0.1
-        [DataRow(null, null, "4.3.0", 8)]                               // 8 distinct packages in qas-full.json with FHIR version 4.3.0
-        [DataRow(null, null, "5.0.0", 61)]                              // 61 distinct packages in qas-full.json with FHIR version 4.3.0
+        [DataRow(null, null, null, null, null, 445)]                                // 445 distinct packages in qas-full.json
+        [DataRow("hl7.fhir.ca.baseline", null, null, null, null, 1)]
+        [DataRow(null, null, "http://hl7.org/fhir/ca/baseline/ImplementationGuide/hl7.fhir.ca.baseline", null, null, 1)]
+        [DataRow("hl7.fhir.ca.baseline", null, "http://hl7.org/fhir/ca/baseline/ImplementationGuide/hl7.fhir.ca.baseline", null, null, 1)]
+        [DataRow("hl7.fhir.ca.baseline", null, null, "HL7-Canada/ca-baseline", null, 1)]
+        [DataRow(null, null, null, "HL7-Canada/ca-baseline", null, 1)]
+        [DataRow("hl7.fhir.ca.baseline", null, null, "HL7-Canada/ca-baseline/branches/master", null, 1)]
+        [DataRow("hl7.fhir.ca.baseline", null, null, null, "master", 1)]
+        [DataRow("hl7.fhir.ca.baseline", null, null, null, "main", 0)]
+        [DataRow(null, "4.0.1", null, null, null, 345)]                             // 345 distinct packages in qas-full.json with FHIR version 4.0.1
+        [DataRow(null, "4.3.0", null, null, null, 13)]                              // 13 distinct packages in qas-full.json with FHIR version 4.3.0
+        [DataRow(null, "5.0.0", null, null, null, 91)]                              // 91 distinct packages in qas-full.json with FHIR version 5.0.0
         public async Task TestFhirCiCatalog(
-            string? id, 
-            string? canonical,
+            string? id,
             string? fhirVersion,
+            string? siteUrl,
+            string? repo,
+            string? branch,
             int expectedCount)
         {
-            List<PackageCatalogEntry> entries = await _client.CatalogPackagesAsync(pkgName: id, canonical, fhirVersion);
+            List<PackageCatalogEntry> entries = await _client.CatalogPackagesAsync(
+                pkgname: id, 
+                fhirversion: fhirVersion,
+                site: siteUrl,
+                repo: repo,
+                branch: branch);
             entries.Count.Should().Be(expectedCount);
 
             if (id != null)
             {
                 entries.All(e => e.Name == id).Should().BeTrue();
             }
+        }
+
+        [DataTestMethod]
+        [DataRow("hl7.fhir.ca.baseline", 2)]
+        [DataRow("cinc.fhir.ig", 9)]
+        public async Task TestFhirCiDownloadListing(
+            string id,
+            int expectedCount)
+        {
+            PackageListing? listing = await _client.DownloadListingAsync(id);
+
+            if (expectedCount == 0)
+            {
+                listing.Should().BeNull();
+                return;
+            }
+
+            listing.Should().NotBeNull();
+            if (listing == null)
+            {
+                return;
+            }
+
+            listing.Versions.Should().NotBeNull();
+            if (listing.Versions == null)
+            {
+                return;
+            }
+
+            listing.Versions.Count.Should().Be(expectedCount);
+
+            listing.Versions.All(e => e.Value.Name == id).Should().BeTrue();
+        }
+
+        [DataTestMethod]
+        [DataRow("hl7.fhir.ca.baseline", 2)]
+        [DataRow("cinc.fhir.ig", 9)]
+        [DataRow("ihe.pcc.qedm", 4)]
+        public async Task TestFhirCiGetVersions(
+            string id,
+            int expectedCount)
+        {
+            Versions? versions = await _client.GetVersions(id);
+
+            versions.Should().NotBeNull();
+            if (versions == null)
+            {
+                return;
+            }
+
+            if (expectedCount == 0)
+            {
+                versions.Items.Count.Should().Be(0);
+                return;
+            }
+
+            versions.Items.Count.Should().Be(expectedCount);
+            versions.Items.All(e => e.ToString().Contains("-")).Should().BeTrue();
+        }
+
+
+        [DataTestMethod]
+        [DataRow("hl7.fhir.ca.baseline",    null,                           "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("cinc.fhir.ig",            null,                           "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "CommunicationPerson",          "0.4.0-cibuild+20240627-051754Z")]
+        [DataRow("cinc.fhir.ig",            "RFphase1",                     "0.3.9-cibuild+20240618-041305Z")]
+        [DataRow("ihe.pcc.qedm",            null,                           "3.0.0-comment1+20240805-120740Z")]
+        public async Task TestFhirCiGetCurrent(
+            string id,
+            string? branchName,
+            string expectedVersion)
+        {
+            PackageReference pr = await _client.GetCurrent(id, branchName);
+
+            if (string.IsNullOrEmpty(expectedVersion))
+            {
+                pr.Should().BeEquivalentTo(PackageReference.None);
+                return;
+            }
+
+            pr.Name.Should().BeEquivalentTo(id);
+            pr.Version.Should().BeEquivalentTo(expectedVersion);
+        }
+
+
+        [DataTestMethod]
+        [DataRow(FhirCiClient.FhirCiScope,  "not-a-real-package",   null,                               true)]
+        [DataRow("invalid-scope",           "cinc.fhir.ig",         null,                               true)]
+        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         null,                               false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "0.4.0-cibuild+20240702-012714Z",   false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "current",                          false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "0.3.9-cibuild+20240618-041305Z",   false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "current$RFphase1",                 false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "ihe.pcc.qedm",         "3.0.0-comment1+20240805-120740Z",  false)]
+        [DataRow(FhirCiClient.FhirCiScope,  "ihe.pcc.qedm",         "current",                          false)]
+        public async Task TestFhirCiDownloadPackage(
+            string? scope,
+            string name,
+            string? version,
+            bool shouldThrow)
+        {
+            bool threw = false;
+            string message = string.Empty;
+
+            try
+            {
+                PackageReference packageReference = new(scope, name, version);
+                byte[] packageData = await _client.GetPackage(packageReference);
+            }
+            catch (Exception ex)
+            {
+                message = ex.InnerException == null ? ex.Message : ex.Message + ex.InnerException.Message;
+                threw = true;
+            }
+
+            threw.Should().Be(shouldThrow, message);
         }
     }
 
@@ -77,10 +206,29 @@ namespace Firely.Fhir.Packages.Tests
                         return Task.FromResult(JsonFile("TestData/ci/qas-full.json"));
                     }
 
+                // package downloads based on QA records
+                case "https://build.fhir.org/ig/tewhatuora/cinc-fhir-ig/package.tgz":
+                case "https://build.fhir.org/ig/tewhatuora/cinc-fhir-ig/branches/RFphase1/package.tgz":
+                case "https://profiles.ihe.net/PCC/QEDm/package.tgz":
+                    {
+                        return Task.FromResult(EmptyResponse("application/gzip"));
+                    }
+
                 default:
                     throw new NotImplementedException($"The request URI {request.RequestUri?.AbsoluteUri} is not implemented.");
             }
         }
+
+        internal static HttpResponseMessage EmptyResponse(
+            string mimeType = "text/plain",
+            HttpStatusCode statusCode = HttpStatusCode.OK)
+        {
+            return new HttpResponseMessage(statusCode)
+            {
+                Content = new StringContent(string.Empty, new System.Net.Http.Headers.MediaTypeHeaderValue(mimeType)),
+            };
+        }
+
 
         /// <summary>
         /// Creates a JSON response message based on the content.

@@ -883,14 +883,26 @@ namespace Firely.Fhir.Packages
         [JsonProperty(PropertyName = "name")]
         public string? Name { get; set; }
 
+        [JsonProperty(PropertyName = "title")]
+        public string? Title { get; set; }
+
+        [JsonProperty(PropertyName = "description")]
+        public string? Description { get; set; }
+
+        [JsonProperty(PropertyName = "status")]
+        public string? Status { get; set; }
+
         [JsonProperty(PropertyName = "package-id")]
         public string? PackageId { get; set; }
 
         [JsonProperty(PropertyName = "ig-ver")]
-        public string? GuideVersion { get; set; }
+        public string? PackageVersion { get; set; }
 
         [JsonProperty(PropertyName = "date")]
-        public string? BuildDate { get; set; }
+        public DateTimeOffset? BuildDate { get; set; }
+
+        [JsonProperty(PropertyName = "dateISO8601")]
+        public DateTimeOffset? BuildDateIso { get; set; }
 
         [JsonProperty(PropertyName = "errs")]
         public int? ErrorCount { get; set; }
@@ -901,11 +913,20 @@ namespace Firely.Fhir.Packages
         [JsonProperty(PropertyName = "hints")]
         public int? HintCount { get; set; }
 
+        [JsonProperty(PropertyName = "suppressed-hints")]
+        public int? SuppressedHintCount { get; set; }
+
+        [JsonProperty(PropertyName = "suppressed-warnings")]
+        public int? SuppressedWarningCount { get; set; }
+
         [JsonProperty(PropertyName = "version")]
         public string? FhirVersion { get; set; }
 
         [JsonProperty(PropertyName = "tool")]
         public string? ToolingVersion { get; set; }
+
+        [JsonProperty(PropertyName = "maxMemory")]
+        public long? MaxMemoryUsedToBuild { get; set; }
 
         [JsonProperty(PropertyName = "repo")]
         public string? RepositoryUrl { get; set; }
