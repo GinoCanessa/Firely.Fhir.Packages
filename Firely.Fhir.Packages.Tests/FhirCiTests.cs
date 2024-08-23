@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Hl7.Fhir.Introspection;
+using Hl7.Fhir.Model;
 using Hl7.Fhir.Specification;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -126,40 +127,60 @@ namespace Firely.Fhir.Packages.Tests
 
         [DataTestMethod]
         [DataRow("hl7.fhir.ca.baseline",    null,                           "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "current",                      "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "master",                       "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "current$master",               "1.1.0-cibuild+20240809-194642Z")]
         [DataRow("cinc.fhir.ig",            null,                           "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "current",                      "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "master",                       "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "current$master",               "0.4.0-cibuild+20240702-012714Z")]
         [DataRow("cinc.fhir.ig",            "CommunicationPerson",          "0.4.0-cibuild+20240627-051754Z")]
         [DataRow("cinc.fhir.ig",            "RFphase1",                     "0.3.9-cibuild+20240618-041305Z")]
         [DataRow("ihe.pcc.qedm",            null,                           "3.0.0-comment1+20240805-120740Z")]
-        public async Task TestFhirCiGetCurrent(
+        public async Task TestFhirCiResolve(
             string id,
-            string? branchName,
+            string? versionDiscriminator,
             string expectedVersion)
         {
-            PackageReference pr = await _client.GetCurrent(id, branchName);
+            (PackageReference tagged, PackageReference resolved) = await _client.GetReferences(id, versionDiscriminator);
 
             if (string.IsNullOrEmpty(expectedVersion))
             {
-                pr.Should().BeEquivalentTo(PackageReference.None);
+                tagged.Should().BeEquivalentTo(PackageReference.None);
+                resolved.Should().BeEquivalentTo(PackageReference.None);
                 return;
             }
 
-            pr.Name.Should().BeEquivalentTo(id);
-            pr.Version.Should().BeEquivalentTo(expectedVersion);
+            tagged.Name.Should().BeEquivalentTo(id);
+            if (string.IsNullOrEmpty(versionDiscriminator) || (versionDiscriminator == "current"))
+            {
+                tagged.Version.Should().BeEquivalentTo("current");
+            }
+            else if (versionDiscriminator.Contains('$'))
+            {
+                tagged.Version.Should().BeEquivalentTo(versionDiscriminator);
+            }
+            else
+            {
+                tagged.Version.Should().BeEquivalentTo($"current${versionDiscriminator}");
+            }
+
+            resolved.Name.Should().BeEquivalentTo(id);
+            resolved.Version.Should().BeEquivalentTo(expectedVersion);
         }
 
 
         [DataTestMethod]
-        [DataRow(FhirCiClient.FhirCiScope,  "not-a-real-package",   null,                               true)]
-        [DataRow("invalid-scope",           "cinc.fhir.ig",         null,                               true)]
-        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         null,                               false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "0.4.0-cibuild+20240702-012714Z",   false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "current",                          false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "0.3.9-cibuild+20240618-041305Z",   false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "cinc.fhir.ig",         "current$RFphase1",                 false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "ihe.pcc.qedm",         "3.0.0-comment1+20240805-120740Z",  false)]
-        [DataRow(FhirCiClient.FhirCiScope,  "ihe.pcc.qedm",         "current",                          false)]
+        [DataRow("not-a-real-package",   null,                               true)]
+        [DataRow("cinc.fhir.ig",         null,                               false)]
+        [DataRow("cinc.fhir.ig",         null,                               false)]
+        [DataRow("cinc.fhir.ig",         "0.4.0-cibuild+20240702-012714Z",   false)]
+        [DataRow("cinc.fhir.ig",         "current",                          false)]
+        [DataRow("cinc.fhir.ig",         "0.3.9-cibuild+20240618-041305Z",   false)]
+        [DataRow("cinc.fhir.ig",         "current$RFphase1",                 false)]
+        [DataRow("ihe.pcc.qedm",         "3.0.0-comment1+20240805-120740Z",  false)]
+        [DataRow("ihe.pcc.qedm",         "current",                          false)]
         public async Task TestFhirCiDownloadPackage(
-            string? scope,
             string name,
             string? version,
             bool shouldThrow)
@@ -169,8 +190,8 @@ namespace Firely.Fhir.Packages.Tests
 
             try
             {
-                PackageReference packageReference = new(scope, name, version);
-                byte[] packageData = await _client.GetPackage(packageReference);
+                (PackageReference tagged, PackageReference resolved) = await _client.GetReferences(name, version);
+                byte[] packageData = await _client.GetPackage(resolved);
             }
             catch (Exception ex)
             {
@@ -206,10 +227,13 @@ namespace Firely.Fhir.Packages.Tests
                         return Task.FromResult(JsonFile("TestData/ci/qas-full.json"));
                     }
 
-                // package downloads based on QA records
+                // package downloads for cinc.fhir.ig
                 case "https://build.fhir.org/ig/tewhatuora/cinc-fhir-ig/package.tgz":
+                case "https://build.fhir.org/ig/tewhatuora/cinc-fhir-ig/branches/master/package.tgz":
                 case "https://build.fhir.org/ig/tewhatuora/cinc-fhir-ig/branches/RFphase1/package.tgz":
+                // package downloads for ihe.pcc.qedm
                 case "https://profiles.ihe.net/PCC/QEDm/package.tgz":
+                case "https://profiles.ihe.net/PCC/QEDm/branches/master/package.tgz":
                     {
                         return Task.FromResult(EmptyResponse("application/gzip"));
                     }

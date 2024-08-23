@@ -44,6 +44,9 @@ namespace Firely.Fhir.Packages
         /// <summary>(Immutable) The CI version date format.</summary>
         private const string _ciVersionDateFormat = "yyyyMMdd-HHmmssZ";
 
+        /// <summary>(Immutable) The default branch names.</summary>
+        private static readonly HashSet<string> _defaultBranchNames = new() { "main", "master" };
+
         /// <summary>(Immutable) URI of the FHIR CI server.</summary>
         private static readonly Uri _ciUri = new("http://build.fhir.org/");
 
@@ -165,12 +168,21 @@ namespace Firely.Fhir.Packages
             return (updatedQas, qasByPackageId);
         }
 
+        /// <summary>
+        /// Downloads the current qas.json file from the build server and deserializes into an array of <see cref="FhirCiQaRecord"/>.
+        /// </summary>
+        /// <returns>An array of FhirCiQaRecord objects representing the current FhirCiQaRecords.</returns>
         private async Task<FhirCiQaRecord[]?> downloadCurrentQAs()
         {
             string contents = await _httpClient.GetStringAsync(_qasUri);
             return JsonConvert.DeserializeObject<FhirCiQaRecord[]>(contents);
         }
 
+        /// <summary>
+        /// Builds the version string for a FhirCiQaRecord.
+        /// </summary>
+        /// <param name="qa">The FhirCiQaRecord.</param>
+        /// <returns>The version string.</returns>
         private static string buildVersionString(FhirCiQaRecord qa)
         {
             string versionPrerelease = qa.PackageVersion?.Contains('-') ?? false
@@ -184,9 +196,9 @@ namespace Firely.Fhir.Packages
             // if we do not have a date, mangle the branch info
             if (buildMeta == null)
             {
-                string? branchName = getBranchFromRepo(qa.RepositoryUrl);
+                (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
 
-                versionPrerelease = string.IsNullOrEmpty(branchName)
+                versionPrerelease = isDefaultBranch || string.IsNullOrEmpty(branchName)
                     ? versionPrerelease
                     : (versionPrerelease + _ciBranchDelimiter + cleanForSemVer(branchName!));
 
@@ -207,6 +219,11 @@ namespace Firely.Fhir.Packages
             return $"{packageVersion}{versionPrerelease}+{cleanForSemVer(buildMeta)}";
         }
 
+        /// <summary>
+        /// Generates a <see cref="PackageListing"/> from a list of <see cref="FhirCiQaRecord"/>.
+        /// </summary>
+        /// <param name="qaRecs">The list of <see cref="FhirCiQaRecord"/>.</param>
+        /// <returns>The generated <see cref="PackageListing"/>.</returns>
         private PackageListing? listingFromQaRecs(List<FhirCiQaRecord> qaRecs)
         {
             PackageListing? listing = null;
@@ -253,22 +270,26 @@ namespace Firely.Fhir.Packages
 
                 foreach (FhirCiQaRecord qa in qaRecs.OrderBy(qa => qa.BuildDateIso ?? qa.BuildDate))
                 {
-                    string? branchName = getBranchFromRepo(qa.RepositoryUrl);
-                    string tag = branchName switch
-                    {
-                        null => "current",
-                        "master" => "current",
-                        "main" => "current",
-                        _ => "current$" + branchName,
-                    };
+                    (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
 
-                    if (listing.DistTags.ContainsKey(tag))
-                    {
-                        continue;
-                    }
+                    string tag = branchName == null
+                        ? "current"
+                        : "current$" + branchName;
 
                     string versionLiteral = buildVersionString(qa);
-                    listing.DistTags.Add(tag, versionLiteral);
+
+                    // add the full tag if we have it
+                    if (!listing.DistTags.ContainsKey(tag))
+                    {
+                        listing.DistTags.Add(tag, versionLiteral);
+                    }
+
+                    // check for default branches to add them as well
+                    if (isDefaultBranch && 
+                        (!listing.DistTags.ContainsKey("current")))
+                    {
+                        listing.DistTags.Add("current", versionLiteral);
+                    }
                 }
             }
 
@@ -276,8 +297,11 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
-        /// Download the package listing.
+        /// Retrieve a package listing for a Package
         /// </summary>
+        /// <remarks>
+        /// Note that is function creates package listing records based on QA records from the build server.
+        /// </remarks>
         /// <param name="pkgname">Name of the package.</param>
         /// <returns>Package listing.</returns>
         public async ValueTask<PackageListing?> DownloadListingAsync(string pkgname)
@@ -294,16 +318,17 @@ namespace Firely.Fhir.Packages
             return listingFromQaRecs(qaRecs);
         }
 
-        private static string? getBranchFromRepo(string? partialRepoLiteral)
+        /// <summary>
+        /// Extracts the branch name from a repository URL.
+        /// </summary>
+        /// <param name="partialRepoLiteral">The partial repository URL.</param>
+        /// <returns>The branch name extracted from the repository URL, or null if the branch name cannot be determined.</returns>
+        private static (string? branchName, bool isDefaultBranch) getBranchFromRepo(string? partialRepoLiteral)
         {
             if ((partialRepoLiteral == null) ||
-                string.IsNullOrEmpty(partialRepoLiteral) ||
-                partialRepoLiteral.Contains("branches/main") ||
-                partialRepoLiteral.Contains("branches/master") ||
-                partialRepoLiteral.Contains("tree/main") ||
-                partialRepoLiteral.Contains("tree/main"))
+                string.IsNullOrEmpty(partialRepoLiteral))
             {
-                return null;
+                return (null, false);
             }
 
             int branchStart = partialRepoLiteral.IndexOf("branches/") + 9;
@@ -315,12 +340,16 @@ namespace Firely.Fhir.Packages
 
             if (branchStart == -1)
             {
-                return null;
+                return (null, false);
             }
 
             int branchEnd = partialRepoLiteral.IndexOf('/', branchStart);
 
-            return branchEnd == -1 ? partialRepoLiteral.Substring(branchStart) : partialRepoLiteral.Substring(branchStart, branchEnd - branchStart);
+            string branchName = branchEnd == -1 
+                ? partialRepoLiteral.Substring(branchStart) 
+                : partialRepoLiteral.Substring(branchStart, branchEnd - branchStart);
+
+            return (branchName, _defaultBranchNames.Contains(branchName));
         }
 
         /// <summary>Get a list of package catalogs, based on optional parameters.</summary>
@@ -458,6 +487,11 @@ namespace Firely.Fhir.Packages
             return entries;
         }
 
+        /// <summary>
+        /// Cleans the input string to be usable in a semantic versioning component.
+        /// </summary>
+        /// <param name="value">The input string to be cleaned.</param>
+        /// <returns>The cleaned string for semantic versioning.</returns>
         private static string cleanForSemVer(string value)
         {
             List<char> clean = new(value.Length);
@@ -476,29 +510,52 @@ namespace Firely.Fhir.Packages
             return new string(clean.ToArray());
         }
 
-        private FhirCiQaRecord? qaRecordFromPackageRef(PackageReference pr)
+        /// <summary>
+        /// Retrieves the FhirCiQaRecord for the specified package name and version or tag.
+        /// </summary>
+        /// <param name="name">The name of the package.</param>
+        /// <param name="versionDiscriminator">The version, tag, or branch of the package.</param>
+        /// <returns>The FhirCiQaRecord for the specified package name and version or tag, or null if not found.</returns>
+        private async ValueTask<FhirCiQaRecord?> getQaRecord(string? name, string? versionDiscriminator)
         {
-            (FhirCiQaRecord[] _, Dictionary<string, List<FhirCiQaRecord>> qasByPackageId) = getQAs().Result;
-
-            if (string.IsNullOrEmpty(pr.Name) ||
-                (!qasByPackageId.TryGetValue(pr.Name!, out List<FhirCiQaRecord>? qaRecs)))
+            if (string.IsNullOrEmpty(name))
             {
                 return null;
             }
 
-            // no version resolves to 'current' by default
-            string requestedVersion = pr.Version ?? "current";
+            (FhirCiQaRecord[] _, Dictionary<string, List<FhirCiQaRecord>> qasByPackageId) = await getQAs();
+
+            if (!qasByPackageId.TryGetValue(name!, out List<FhirCiQaRecord>? qaRecs))
+            {
+                return null;
+            }
+
+            // no version resolves to the 'current' tag by default
+            string requestedVersion = versionDiscriminator switch
+            {
+                null => "current",
+                _ => versionDiscriminator,
+            };
 
             // check for using a tag and resolve it to a version
             if (!requestedVersion.Contains('+'))
             {
                 PackageListing? listing = listingFromQaRecs(qaRecs);
 
-                if ((listing != null) &&
-                    (listing.DistTags?.TryGetValue(requestedVersion, out string? version) == true) &&
-                    (listing.Versions?.TryGetValue(version, out PackageRelease? _) == true))
+                if (listing != null)
                 {
-                    requestedVersion = version;
+                    // check for a tag
+                    if ((listing.DistTags?.TryGetValue(requestedVersion, out string? tagVersion) == true) &&
+                        (listing.Versions?.TryGetValue(tagVersion, out PackageRelease? _) == true))
+                    {
+                        requestedVersion = tagVersion;
+                    }
+                    // check for a branch name
+                    else if ((listing.DistTags?.TryGetValue("current$" + requestedVersion, out tagVersion) == true) &&
+                             (listing.Versions?.TryGetValue(tagVersion, out PackageRelease? _) == true))
+                    {
+                        requestedVersion = tagVersion;
+                    }
                 }
             }
 
@@ -506,9 +563,9 @@ namespace Firely.Fhir.Packages
 
             if ((rvComponents.Length > 1) &&
                 DateTimeOffset.TryParseExact(
-                    rvComponents.Last(), 
-                    _ciVersionDateFormat, 
-                    CultureInfo.InvariantCulture.DateTimeFormat, 
+                    rvComponents.Last(),
+                    _ciVersionDateFormat,
+                    CultureInfo.InvariantCulture.DateTimeFormat,
                     DateTimeStyles.None, out DateTimeOffset requestedDto))
             {
                 // traverse the records in the package looking for a match
@@ -538,7 +595,7 @@ namespace Firely.Fhir.Packages
             }
 
             // find our package in the QA listings
-            FhirCiQaRecord? qa = qaRecordFromPackageRef(reference);
+            FhirCiQaRecord? qa = await getQaRecord(reference.Name, reference.Version);
 
             if (qa == null)
             {
@@ -546,7 +603,7 @@ namespace Firely.Fhir.Packages
             }
 
             // extract the branch name
-            string? branchName = getBranchFromRepo(qa.RepositoryUrl);
+            (string? branchName, bool _) = getBranchFromRepo(qa.RepositoryUrl);
 
             // build the URL
             int igUrlIndex = qa.Url?.IndexOf("/ImplementationGuide/", StringComparison.Ordinal) ?? -1;
@@ -563,35 +620,77 @@ namespace Firely.Fhir.Packages
             return await _httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
         }
 
-        public async ValueTask<PackageReference> GetCurrent(string name, string? branchName = null)
+        /// <summary>
+        /// Retrieves a tag-based package reference based on the provided name and version or tag.
+        /// </summary>
+        /// <param name="name">        The name of the package.</param>
+        /// <param name="versionDiscriminator">The version, tag, or branch of the package.</param>
+        /// <param name="qa">          (Optional) The FhirCiQaRecord.</param>
+        /// <returns>The package reference.</returns>
+        public async ValueTask<PackageReference> GetTagBasedReference(string? name, string? versionDiscriminator, FhirCiQaRecord? qa = null)
         {
-            PackageListing? listing = await DownloadListingAsync(name);
-            if ((listing == null) ||
-                (listing.DistTags == null) ||
-                (listing.DistTags.Count == 0))
+            // find our package in the QA listings
+            qa ??= await getQaRecord(name, versionDiscriminator);
+
+            if (qa == null)
             {
                 return PackageReference.None;
             }
 
-            string tag = branchName switch
-            {
-                null => "current",
-                "master" => "current",
-                "main" => "current",
-                _ => "current$" + branchName,
-            };
+            (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
 
-            if (listing.DistTags.TryGetValue(tag, out string? versionLiteral))
+            string tag;
+            if ((branchName == null) ||
+                (isDefaultBranch && (!versionDiscriminator?.Contains(branchName) ?? true)))
             {
-                return new PackageReference(FhirCiScope, listing.Id ?? name, versionLiteral);
+                tag = "current";
+            }
+            else
+            {
+                tag = "current$" + branchName;
             }
 
-            return PackageReference.None;
+            return new PackageReference(FhirCiScope, qa.PackageId ?? name!, tag);
         }
 
+        /// <summary>
+        /// Retrieves the resolved-version reference for a package based on its name and version or tag.
+        /// </summary>
+        /// <param name="name">        The name of the package.</param>
+        /// <param name="versionDiscriminator">The version, tag, or branch of the package.</param>
+        /// <param name="qa">          (Optional) The FhirCiQaRecord.</param>
+        /// <returns>The resolved package reference.</returns>
+        public async ValueTask<PackageReference> GetResolvedReference(string name, string? versionDiscriminator, FhirCiQaRecord? qa = null)
+        {
+            // find our package in the QA listings
+            qa ??= await getQaRecord(name, versionDiscriminator);
+
+            if (qa == null)
+            {
+                return PackageReference.None;
+            }
+
+            string version = buildVersionString(qa);
+
+            return new PackageReference(FhirCiScope, qa.PackageId ?? name!, version);
+        }
 
         /// <summary>
-        /// Retrieve the different versions of a package.
+        /// Retrieves the tagged and resolved package references for a given package name and version or tag.
+        /// </summary>
+        /// <param name="name">The name of the package.</param>
+        /// <param name="versionDiscriminator">The version, tag, or branch of the package.</param>
+        /// <returns>A tuple containing the tagged and resolved package references.</returns>
+        public async ValueTask<(PackageReference tagged, PackageReference resolved)> GetReferences(string name, string? versionDiscriminator)
+        {
+            // find our package in the QA listings
+            FhirCiQaRecord? qa = await getQaRecord(name, versionDiscriminator);
+
+            return (await GetTagBasedReference(name, versionDiscriminator, qa), await GetResolvedReference(name, versionDiscriminator, qa));
+        }
+
+        /// <summary>
+        /// Retrieve a list of all versions of a package id on the build server.
         /// </summary>
         /// <param name="name">Package name.</param>
         /// <returns>List of versions.</returns>
@@ -624,6 +723,7 @@ namespace Firely.Fhir.Packages
         {
             return await downloadPackage(reference);
         }
+
 
         #region IDisposable
 
