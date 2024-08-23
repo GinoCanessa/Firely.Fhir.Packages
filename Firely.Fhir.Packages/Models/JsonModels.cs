@@ -340,8 +340,9 @@ namespace Firely.Fhir.Packages
 
         /// <summary>The date the package was published.</summary>
         /// <remarks>TODO: not documented at https://confluence.hl7.org/pages/viewpage.action?pageId=35718629#NPMPackageSpecification-Packagemanifest </remarks>
+        [JsonConverter(typeof(ManifestDateJsonConverter))]
         [JsonProperty(PropertyName = "date")]
-        public string? Date;
+        public DateTimeOffset? Date;
 
         /// <summary>The tools version used to publish this package.</summary>
         /// <remarks>TODO: not documented at https://confluence.hl7.org/pages/viewpage.action?pageId=35718629#NPMPackageSpecification-Packagemanifest </remarks>
@@ -373,8 +374,6 @@ namespace Firely.Fhir.Packages
         [JsonProperty(PropertyName = "missing")]
         public Dictionary<string, string?>? MissingDependencies;
     }
-
-
 
 
     /// <summary>

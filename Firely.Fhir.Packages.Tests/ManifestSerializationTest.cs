@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Newtonsoft.Json.Linq;
+using System;
 using System.IO;
 
 namespace Firely.Fhir.Packages.Tests
@@ -113,6 +114,41 @@ namespace Firely.Fhir.Packages.Tests
             };
 
             manif.Author.Should().Be(fullAuthor);
+        }
+
+        [DataTestMethod]
+        [DataRow(null)]
+        [DataRow(2024, 08, 23, 15, 06, 00)]
+        public void TestDateRoundtrip(int? year, int month = 0, int day = 0, int hour = 0, int minute = 0, int second = 0, int tzOffset = 0)
+        {
+            DateTimeOffset? dto = null;
+
+            if (year != null)
+            {
+                dto = new DateTimeOffset((int)year, month, day, hour, minute, second, TimeSpan.FromHours(tzOffset));
+            }
+
+            PackageManifest manif = new(name: "date.test", version: "1.0.0")
+            {
+                Date = dto,
+            };
+
+            var json = PackageParser.SerializeManifest(manif);
+
+            var parsedJson = JObject.Parse(json);
+
+            // check for proper serialization
+            if (dto == null)
+            {
+                Assert.IsFalse(parsedJson.ContainsKey("date"));
+            }
+            else
+            {
+                var dtoString = dto?.ToString("yyyyMMddHHmmss");
+                json.Should().Contain(dtoString);
+
+                Assert.IsTrue(parsedJson.ContainsKey("date"));
+            }
         }
 
         [TestMethod]

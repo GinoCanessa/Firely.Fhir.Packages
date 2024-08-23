@@ -587,7 +587,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="reference">Package reference of the package to be downloaded.</param>
         /// <returns>Package content as a byte array.</returns>
-        private async ValueTask<byte[]> downloadPackage(PackageReference reference)
+        private async ValueTask<byte[]> downloadPackage(PackageReference reference, FhirCiQaRecord? qa = null)
         {
             if (reference.Scope != FhirCiScope)
             {
@@ -595,7 +595,7 @@ namespace Firely.Fhir.Packages
             }
 
             // find our package in the QA listings
-            FhirCiQaRecord? qa = await getQaRecord(reference.Name, reference.Version);
+            qa ??= await getQaRecord(reference.Name, reference.Version);
 
             if (qa == null)
             {
@@ -660,7 +660,7 @@ namespace Firely.Fhir.Packages
         /// <param name="versionDiscriminator">The version, tag, or branch of the package.</param>
         /// <param name="qa">          (Optional) The FhirCiQaRecord.</param>
         /// <returns>The resolved package reference.</returns>
-        public async ValueTask<PackageReference> GetResolvedReference(string name, string? versionDiscriminator, FhirCiQaRecord? qa = null)
+        public async ValueTask<PackageReference> GetResolvedReference(string? name, string? versionDiscriminator, FhirCiQaRecord? qa = null)
         {
             // find our package in the QA listings
             qa ??= await getQaRecord(name, versionDiscriminator);
@@ -724,6 +724,99 @@ namespace Firely.Fhir.Packages
             return await downloadPackage(reference);
         }
 
+        /// <summary>
+        /// Checks if a package is outdated by comparing its build date with the build date from the QA listings.
+        /// </summary>
+        /// <param name="reference">The package reference.</param>
+        /// <param name="cache">The package cache.</param>
+        /// <returns>True if the package is outdated, false if it is up to date, or null if the package is not found in the QA listings.</returns>
+        public async Task<bool?> IsPackageOutdated(PackageReference reference, IPackageCache cache)
+        {
+            // find our package in the QA listings
+            FhirCiQaRecord? qa = await getQaRecord(reference.Name, reference.Version);
+
+            if (qa == null)
+            {
+                return null;
+            }
+
+            // make sure we have the tag and resolved version references for comparison
+            PackageReference taggedReference = await GetTagBasedReference(reference.Name, reference.Version, qa);
+            PackageReference resolvedReference = await GetResolvedReference(reference.Name, reference.Version, qa);
+
+            // if either fails, we cannot proceed
+            if ((taggedReference == PackageReference.None) ||
+                (resolvedReference == PackageReference.None))
+            {
+                return null;
+            }
+
+            // check for a local copy - CI builds are installed by tag
+            bool isInstalled = await cache.IsInstalled(taggedReference);
+
+            if (!isInstalled)
+            {
+                return true;
+            }
+
+            // get the manifest from the local copy
+            PackageManifest? installedManifest = await cache.ReadManifest(taggedReference);
+
+            if (installedManifest == null)
+            {
+                return true;
+            }
+
+            // compare the build date from QA and the installed manifest
+            return (installedManifest.Date ?? DateTimeOffset.MinValue) < (qa.BuildDateIso ?? qa.BuildDate ?? DateTimeOffset.MaxValue);
+        }
+
+        /// <summary>
+        /// Installs or updates a package from the FHIR CI server.
+        /// </summary>
+        /// <param name="reference">The package reference to install or update.</param>
+        /// <param name="cache">The package cache.</param>
+        public async Task InstallOrUpdate(PackageReference reference, IPackageCache cache)
+        {
+            // find our package in the QA listings
+            FhirCiQaRecord? qa = await getQaRecord(reference.Name, reference.Version);
+
+            if (qa == null)
+            {
+                throw new Exception($"Could not resolve {reference.Moniker} on the CI server");
+            }
+
+            // make sure we have the tag and resolved version references for comparison
+            PackageReference taggedReference = await GetTagBasedReference(reference.Name, reference.Version, qa);
+            PackageReference resolvedReference = await GetResolvedReference(reference.Name, reference.Version, qa);
+
+            // if either fails, we cannot proceed
+            if ((taggedReference == PackageReference.None) ||
+                (resolvedReference == PackageReference.None))
+            {
+                throw new Exception($"Could not resolve version information for {reference.Moniker} on the CI server");
+            }
+
+            // check for a local copy - CI builds are installed by tag
+            bool isInstalled = await cache.IsInstalled(taggedReference);
+
+            // get the manifest from the local copy
+            PackageManifest? installedManifest = isInstalled ? await cache.ReadManifest(taggedReference) : null;
+
+            // compare the build date from QA and the installed manifest
+            bool shouldDownload = (installedManifest?.Date ?? DateTimeOffset.MinValue) < (qa.BuildDateIso ?? qa.BuildDate ?? DateTimeOffset.MaxValue);
+
+            if (!shouldDownload)
+            {
+                return;
+            }
+
+            // download happens via the resolved version
+            byte[] data = await downloadPackage(resolvedReference, qa);
+
+            // install happens via the tagged version
+            await cache.Install(taggedReference, data);
+        }
 
         #region IDisposable
 
