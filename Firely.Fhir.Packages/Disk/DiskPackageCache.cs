@@ -51,6 +51,24 @@ namespace Firely.Fhir.Packages
         }
 
         /// <summary>
+        /// Deletes a package from the disk package cache.
+        /// </summary>
+        /// <param name="reference">The package reference.</param>
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task Delete(PackageReference reference)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            var target = PackageContentFolder(reference);
+            if (!Directory.Exists(target))
+            {
+                return;
+            }
+
+            // delete the directory recursively
+            Directory.Delete(target, true);
+        }
+
+        /// <summary>
         /// Read the manifest file of a package
         /// </summary>
         /// <param name="reference">Package of which the manifest file is to be read</param>

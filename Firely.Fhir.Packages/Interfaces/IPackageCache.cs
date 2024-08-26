@@ -17,14 +17,14 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Check whether the package is already installed
         /// </summary>
-        /// <param name="reference">the package that is to be checked</param>
-        /// <returns>whether a package is already installed</returns>
+        /// <param name="reference">The package that is to be checked</param>
+        /// <returns>Whether a package is already installed</returns>
         Task<bool> IsInstalled(PackageReference reference);
 
         /// <summary>
         /// Returns all package references currently installed
         /// </summary>
-        /// <returns>all package references currently installed</returns>
+        /// <returns>All package references currently installed</returns>
         public Task<IEnumerable<PackageReference>> GetPackageReferences();
 
         /// <summary>
@@ -33,6 +33,12 @@ namespace Firely.Fhir.Packages
         /// <param name="reference">Package reference of the package to be installed</param>
         /// <param name="buffer">File content of the package</param>
         Task Install(PackageReference reference, byte[] buffer);
+
+        /// <summary>
+        /// Delete a package
+        /// </summary>
+        /// <param name="reference">Package reference of the package to be deleted</param>
+        Task Delete(PackageReference reference);
 
         /// <summary>
         /// Read the manifest file of a package
@@ -51,8 +57,8 @@ namespace Firely.Fhir.Packages
         /// <summary>
         /// Returns the content of a specific file in the package
         /// </summary>
-        /// <param name="reference">package that contains the file</param>
-        /// <param name="filename">file name of the file that is to be read</param>
+        /// <param name="reference">Package that contains the file</param>
+        /// <param name="filename">File name of the file that is to be read</param>
         /// <returns>File content represented as a string</returns>
         Task<string> GetFileContent(PackageReference reference, string filename);
     }
