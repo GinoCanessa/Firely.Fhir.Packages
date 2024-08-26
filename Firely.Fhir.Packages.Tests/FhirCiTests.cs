@@ -32,7 +32,7 @@ namespace Firely.Fhir.Packages.Tests
         }
 
         [DataTestMethod]
-        [DataRow(null, null, null, null, null, 445)]                                // 445 distinct packages in qas-full.json
+        [DataRow(null, null, null, null, null, 445+1)]                             // 445 packages in qas-full.json + 1 core package
         [DataRow("hl7.fhir.ca.baseline", null, null, null, null, 1)]
         [DataRow(null, null, "http://hl7.org/fhir/ca/baseline/ImplementationGuide/hl7.fhir.ca.baseline", null, null, 1)]
         [DataRow("hl7.fhir.ca.baseline", null, "http://hl7.org/fhir/ca/baseline/ImplementationGuide/hl7.fhir.ca.baseline", null, null, 1)]
@@ -44,6 +44,7 @@ namespace Firely.Fhir.Packages.Tests
         [DataRow(null, "4.0.1", null, null, null, 345)]                             // 345 distinct packages in qas-full.json with FHIR version 4.0.1
         [DataRow(null, "4.3.0", null, null, null, 13)]                              // 13 distinct packages in qas-full.json with FHIR version 4.3.0
         [DataRow(null, "5.0.0", null, null, null, 91)]                              // 91 distinct packages in qas-full.json with FHIR version 5.0.0
+        [DataRow("hl7.fhir.r6.core", null, null, null, null, 1)]
         public async Task TestFhirCiCatalog(
             string? id,
             string? fhirVersion,
@@ -69,6 +70,7 @@ namespace Firely.Fhir.Packages.Tests
         [DataTestMethod]
         [DataRow("hl7.fhir.ca.baseline", 2)]
         [DataRow("cinc.fhir.ig", 9)]
+        [DataRow("hl7.fhir.r6.core", 2)]
         public async Task TestFhirCiDownloadListing(
             string id,
             int expectedCount)
@@ -102,6 +104,7 @@ namespace Firely.Fhir.Packages.Tests
         [DataRow("hl7.fhir.ca.baseline", 2)]
         [DataRow("cinc.fhir.ig", 9)]
         [DataRow("ihe.pcc.qedm", 4)]
+        [DataRow("hl7.fhir.r6.core", 2)]
         public async Task TestFhirCiGetVersions(
             string id,
             int expectedCount)
@@ -126,17 +129,20 @@ namespace Firely.Fhir.Packages.Tests
 
 
         [DataTestMethod]
-        [DataRow("hl7.fhir.ca.baseline",    null,                           "1.1.0-cibuild+20240809-194642Z")]
-        [DataRow("hl7.fhir.ca.baseline",    "current",                      "1.1.0-cibuild+20240809-194642Z")]
-        [DataRow("hl7.fhir.ca.baseline",    "master",                       "1.1.0-cibuild+20240809-194642Z")]
-        [DataRow("hl7.fhir.ca.baseline",    "current$master",               "1.1.0-cibuild+20240809-194642Z")]
-        [DataRow("cinc.fhir.ig",            null,                           "0.4.0-cibuild+20240702-012714Z")]
-        [DataRow("cinc.fhir.ig",            "current",                      "0.4.0-cibuild+20240702-012714Z")]
-        [DataRow("cinc.fhir.ig",            "master",                       "0.4.0-cibuild+20240702-012714Z")]
-        [DataRow("cinc.fhir.ig",            "current$master",               "0.4.0-cibuild+20240702-012714Z")]
-        [DataRow("cinc.fhir.ig",            "CommunicationPerson",          "0.4.0-cibuild+20240627-051754Z")]
-        [DataRow("cinc.fhir.ig",            "RFphase1",                     "0.3.9-cibuild+20240618-041305Z")]
-        [DataRow("ihe.pcc.qedm",            null,                           "3.0.0-comment1+20240805-120740Z")]
+        [DataRow("hl7.fhir.ca.baseline",    null,                             "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "current",                        "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "master",                         "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("hl7.fhir.ca.baseline",    "current$master",                 "1.1.0-cibuild+20240809-194642Z")]
+        [DataRow("cinc.fhir.ig",            null,                             "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "current",                        "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "master",                         "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "current$master",                 "0.4.0-cibuild+20240702-012714Z")]
+        [DataRow("cinc.fhir.ig",            "CommunicationPerson",            "0.4.0-cibuild+20240627-051754Z")]
+        [DataRow("cinc.fhir.ig",            "RFphase1",                       "0.3.9-cibuild+20240618-041305Z")]
+        [DataRow("ihe.pcc.qedm",            null,                             "3.0.0-comment1+20240805-120740Z")]
+        [DataRow("hl7.fhir.r6.core",        null,                             "6.0.0-ballot1+20240812-015417Z")]
+        [DataRow("hl7.fhir.r6.core",        "current",                        "6.0.0-ballot1+20240812-015417Z")]
+        [DataRow("hl7.fhir.r6.core",        "current$2024-08-gg-remove-maps", "6.0.0-ballot1+20240806-110403Z")]
         public async Task TestFhirCiResolve(
             string id,
             string? versionDiscriminator,
@@ -180,6 +186,9 @@ namespace Firely.Fhir.Packages.Tests
         [DataRow("cinc.fhir.ig",         "current$RFphase1",                 false)]
         [DataRow("ihe.pcc.qedm",         "3.0.0-comment1+20240805-120740Z",  false)]
         [DataRow("ihe.pcc.qedm",         "current",                          false)]
+        [DataRow("hl7.fhir.r6.core",     null,                               false)]
+        [DataRow("hl7.fhir.r6.core",     "current",                          false)]
+        [DataRow("hl7.fhir.r6.core",     "current$2024-08-gg-remove-maps",   false)]
         public async Task TestFhirCiDownloadPackage(
             string name,
             string? version,
@@ -234,8 +243,30 @@ namespace Firely.Fhir.Packages.Tests
                 // package downloads for ihe.pcc.qedm
                 case "https://profiles.ihe.net/PCC/QEDm/package.tgz":
                 case "https://profiles.ihe.net/PCC/QEDm/branches/master/package.tgz":
+                // package downloads for hl7.fhir.r6.core
+                case "https://build.fhir.org/package.tgz":
+                case "https://build.fhir.org/branches/master/package.tgz":
+                case "https://build.fhir.org/branches/2024-08-gg-remove-maps/package.tgz":
                     {
                         return Task.FromResult(EmptyResponse("application/gzip"));
+                    }
+
+                // CI Core build branch listing
+                case "https://build.fhir.org/branches/":
+                    {
+                        return Task.FromResult(JsonFile("TestData/ci/ci-core-branches.json"));
+                    }
+
+                // CI Core build version info
+                case "https://build.fhir.org/version.info":
+                case "https://build.fhir.org/branches/master/version.info":
+                    {
+                        return Task.FromResult(IniFile("TestData/ci/core-version.info"));
+                    }
+
+                case "https://build.fhir.org/branches/2024-08-gg-remove-maps/version.info":
+                    {
+                        return Task.FromResult(IniFile("TestData/ci/core-gg-version.info"));
                     }
 
                 default:

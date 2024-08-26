@@ -21,7 +21,9 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -52,6 +54,8 @@ namespace Firely.Fhir.Packages
 
         /// <summary>(Immutable) The ci URI using HTTPS.</summary>
         private static readonly Uri _ciUriS = new("https://build.fhir.org/");
+
+        private static readonly Uri _ciBranchUri = new("https://build.fhir.org/branches/");
 
         /// <summary>(Immutable) URI of the qas.</summary>
         private static readonly Uri _qasUri = new("https://build.fhir.org/ig/qas.json");
@@ -128,8 +132,12 @@ namespace Firely.Fhir.Packages
                 return (_qas, _qasByPackageId);
             }
 
-            FhirCiQaRecord[]? updatedQas = await downloadCurrentQAs();
-            if (updatedQas == null)
+            List<FhirCiQaRecord>? updatedGuideQas = await downloadGuideQAs();
+            List<FhirCiQaRecord>? updatedCoreQas = await downloadCoreQAs();
+
+            // join our sets together
+            FhirCiQaRecord[] updatedQAs = (updatedCoreQas ?? Enumerable.Empty<FhirCiQaRecord>()).Concat(updatedGuideQas ?? Enumerable.Empty<FhirCiQaRecord>()).ToArray();
+            if (updatedQAs.Length == 0)
             {
                 return (_qas, _qasByPackageId);
             }
@@ -137,7 +145,7 @@ namespace Firely.Fhir.Packages
             Dictionary<string, List<FhirCiQaRecord>> qasByPackageId = new();
 
             // iterate over the QAS records and add them to a dictionary
-            foreach (FhirCiQaRecord qas in updatedQas)
+            foreach (FhirCiQaRecord qas in updatedQAs)
             {
                 if (qas.PackageId == null)
                 {
@@ -156,7 +164,7 @@ namespace Firely.Fhir.Packages
             // update our cache if necessary
             if (forceRefresh || (_listingInvalidationSeconds != 0))
             {
-                _qas = updatedQas;
+                _qas = updatedQAs;
                 _qasByPackageId = qasByPackageId;
                 _qasLastUpdated = DateTimeOffset.Now;
 
@@ -165,17 +173,240 @@ namespace Firely.Fhir.Packages
             }
 
             // return what we downloaded
-            return (updatedQas, qasByPackageId);
+            return (updatedQAs, qasByPackageId);
         }
 
         /// <summary>
         /// Downloads the current qas.json file from the build server and deserializes into an array of <see cref="FhirCiQaRecord"/>.
         /// </summary>
         /// <returns>An array of FhirCiQaRecord objects representing the current FhirCiQaRecords.</returns>
-        private async Task<FhirCiQaRecord[]?> downloadCurrentQAs()
+        private async Task<List<FhirCiQaRecord>?> downloadGuideQAs()
         {
-            string contents = await _httpClient.GetStringAsync(_qasUri);
-            return JsonConvert.DeserializeObject<FhirCiQaRecord[]>(contents);
+            // download the QA records from the build server
+            HttpRequestMessage request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = _qasUri,
+                Headers =
+                {
+                    Accept =
+                    {
+                        new MediaTypeWithQualityHeaderValue("application/json"),
+                    },
+                },
+            };
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            System.Net.HttpStatusCode statusCode = response.StatusCode;
+
+            if (statusCode != System.Net.HttpStatusCode.OK)
+            {
+                return null;
+            }
+
+            string json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json))
+            {
+                return null;
+            }
+
+            List<FhirCiQaRecord>? qas = JsonConvert.DeserializeObject<List<FhirCiQaRecord>>(json);
+
+            // if we do not have records, we are done
+            if (qas == null)
+            {
+                return null;
+            }
+
+            return qas;
+        }
+
+        private async Task<List<FhirCiQaRecord>> downloadCoreQAs()
+        {
+            List<FhirCiQaRecord> qas = new();
+
+            // download the branch list from the core build
+            HttpRequestMessage request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = _ciBranchUri,
+                Headers =
+                {
+                    Accept =
+                    {
+                        new MediaTypeWithQualityHeaderValue("application/json"),
+                    },
+                },
+            };
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            System.Net.HttpStatusCode statusCode = response.StatusCode;
+
+            if (statusCode != System.Net.HttpStatusCode.OK)
+            {
+                return qas;
+            }
+
+            string json = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(json))
+            {
+                return qas;
+            }
+
+            CiBranchRecord[]? coreBranches = JsonConvert.DeserializeObject<CiBranchRecord[]>(json);
+
+            if (coreBranches == null)
+            {
+                return qas;
+            }
+
+            // traverse the core branches to build their records
+            foreach (CiBranchRecord ciBranchRec in coreBranches)
+            {
+                if ((ciBranchRec.Name == null) ||
+                    string.IsNullOrEmpty(ciBranchRec.Name) ||
+                    string.IsNullOrEmpty(ciBranchRec.Url))
+                {
+                    continue;
+                }
+
+                // download the version.info for this branch
+                request = new HttpRequestMessage()
+                {
+                    Method = HttpMethod.Get,
+                    RequestUri = new Uri(_ciBranchUri, ciBranchRec.Url + "version.info"),
+                    Headers =
+                    {
+                        Accept =
+                        {
+                            new MediaTypeWithQualityHeaderValue("text/plain"),
+                        },
+                    },
+                };
+
+                response = await _httpClient.SendAsync(request);
+                statusCode = response.StatusCode;
+
+                if (statusCode != System.Net.HttpStatusCode.OK)
+                {
+                    continue;
+                }
+
+                string contents = await response.Content.ReadAsStringAsync();
+
+                // grab the contents we can out of the version.info file
+                parseVersionInfoIni(
+                    contents,
+                    out string ciFhirVersion,
+                    out string ciVersion,
+                    out string ciBuildId,
+                    out DateTimeOffset? ciBuildDate);
+
+                string packageId = $"hl7.fhir.r{ciFhirVersion.Split('.').First()}.core";
+
+                if (ciBranchRec.Name == "master/")
+                {
+                    // build a QA record for the main branch
+                    qas.Add(new()
+                    {
+                        Url = "https://build.fhir.org",
+                        Name = "FHIR Core " + ciFhirVersion,
+                        Title = "FHIR Core build",
+                        Status = "draft",
+                        PackageId = packageId,
+                        PackageVersion = ciVersion,
+                        BuildDate = ciBuildDate,
+                        BuildDateIso = ciBuildDate,
+                        FhirVersion = ciFhirVersion,
+                        RepositoryUrl = "HL7/fhir/branches/master/qa.json"
+                    });
+                }
+                else
+                {
+                    // build a QA record for this branch
+                    qas.Add(new()
+                    {
+                        Url = "https://build.fhir.org/branches/" + ciBranchRec.Name.Substring(0, ciBranchRec.Name.Length - 1),
+                        Name = "FHIR Core " + ciFhirVersion + " branch: " + ciBranchRec.Name,
+                        Title = "FHIR Core build",
+                        Status = "draft",
+                        PackageId = packageId,
+                        PackageVersion = ciVersion,
+                        BuildDate = ciBuildDate,
+                        BuildDateIso = ciBuildDate,
+                        FhirVersion = ciFhirVersion,
+                        RepositoryUrl = "HL7/fhir/branches/master/qa.json"
+                    });
+                }
+            }
+
+            return qas;
+        }
+
+
+        /// <summary>Gets local version information.</summary>
+        /// <exception cref="FileNotFoundException">Thrown when the requested file is not present.</exception>
+        /// <param name="contents">   The contents.</param>
+        /// <param name="fhirVersion">[out] The FHIR version.</param>
+        /// <param name="version">    [out] The version string (e.g., 4.0.1).</param>
+        /// <param name="buildId">    [out] Identifier for the build.</param>
+        /// <param name="buildDate">  [out] The build date.</param>
+        private static void parseVersionInfoIni(
+            string contents,
+            out string fhirVersion,
+            out string version,
+            out string buildId,
+            out DateTimeOffset? buildDate)
+        {
+            IEnumerable<string> lines = contents.Split(new string[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+            fhirVersion = string.Empty;
+            version = string.Empty;
+            buildId = string.Empty;
+            buildDate = null;
+
+            foreach (string line in lines)
+            {
+                if (!line.Contains('='))
+                {
+                    continue;
+                }
+
+                string[] kvp = line.Split('=');
+
+                if (kvp.Length != 2)
+                {
+                    continue;
+                }
+
+                switch (kvp[0])
+                {
+                    case "FhirVersion":
+                        fhirVersion = kvp[1];
+                        break;
+
+                    case "version":
+                        version = kvp[1];
+                        break;
+
+                    case "buildId":
+                        buildId = kvp[1];
+                        break;
+
+                    case "date":
+                        {
+                            if (DateTimeOffset.TryParseExact(
+                                kvp[1],
+                                "yyyyMMddHHmmss",
+                                CultureInfo.InvariantCulture.DateTimeFormat,
+                                DateTimeStyles.None, out DateTimeOffset dto))
+                            {
+                                buildDate = dto;
+                            }
+                        }
+                        break;
+                }
+            }
         }
 
         /// <summary>

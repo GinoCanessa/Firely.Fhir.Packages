@@ -3,14 +3,13 @@
   <Import Project="..\Firely.Fhir.Packages.Tests.props" />
 
 	<ItemGroup>
-		<Content Include="TestData\**\*.xml;TestData\**\*.json;TestData\testPackage.tgz;">
+		<Content Include="TestData\**\*.xml;TestData\**\*.json;TestData\**\*.info;TestData\testPackage.tgz;">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Remove="TestData\ci\qas-backport.json" />
-	  <None Remove="TestData\ci\qas-full.json" />
+	  <None Remove="testdata\ci\core-gg-version.info" />
 	</ItemGroup>
 
 	<ItemGroup>

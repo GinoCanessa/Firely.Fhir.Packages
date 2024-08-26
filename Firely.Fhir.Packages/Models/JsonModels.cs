@@ -350,6 +350,35 @@ namespace Firely.Fhir.Packages
         public string? ToolsVersion;
     }
 
+    /// <summary>Information about a CI branch, as returned from a branch query to the server.</summary>
+    public class CiBranchRecord
+    {
+        /// <summary>The relative name for this record.</summary>
+        [JsonProperty(PropertyName = "name")]
+        public string? Name;
+
+        /// <summary>The size of the directory or file.</summary>
+        [JsonProperty(PropertyName = "size")]
+        public long? Size;
+
+        /// <summary>URL of the resource, relative to the current URL.</summary>
+        [JsonProperty(PropertyName = "url")]
+        public string? Url;
+
+        /// <summary>The file/directory mode.</summary>
+        /// <remarks>This looks like a flag, but I cannot find documentation on values.</remarks>
+        [JsonProperty(PropertyName = "mode")]
+        public long? ModeFlag;
+
+        /// <summary>True if is directory, false if not.</summary>
+        [JsonProperty(PropertyName = "is_dir")]
+        public bool? IsDirectory;
+
+        /// <summary>True if is symbolic link, false if not.</summary>
+        [JsonProperty(PropertyName = "is_symlink")]
+        public bool? IsSymbolicLink;
+    }
+
     /// <summary>
     /// Representation of a package lock file
     /// This file is FHIR / Firely specific
