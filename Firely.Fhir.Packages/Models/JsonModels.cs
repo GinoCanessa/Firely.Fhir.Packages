@@ -344,10 +344,13 @@ namespace Firely.Fhir.Packages
         [JsonProperty(PropertyName = "date")]
         public DateTimeOffset? Date;
 
-        /// <summary>The tools version used to publish this package.</summary>
-        /// <remarks>TODO: not documented at https://confluence.hl7.org/pages/viewpage.action?pageId=35718629#NPMPackageSpecification-Packagemanifest </remarks>
-        [JsonProperty(PropertyName = "tools-version")]
-        public string? ToolsVersion;
+        ///// <summary>The tools version used to publish this package.</summary>
+        ///// <remarks>
+        ///// Not documented at https://confluence.hl7.org/pages/viewpage.action?pageId=35718629#NPMPackageSpecification-Packagemanifest 
+        ///// Note that this property is currently disabled since some manifests use an integer and some use a string.
+        ///// </remarks>
+        //[JsonProperty(PropertyName = "tools-version")]
+        //public string? ToolsVersion;
     }
 
     /// <summary>Information about a CI branch, as returned from a branch query to the server.</summary>
