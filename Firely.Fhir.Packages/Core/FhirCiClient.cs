@@ -449,7 +449,7 @@ namespace Firely.Fhir.Packages
             // if we do not have a date, mangle the branch info
             if (buildMeta == null)
             {
-                (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
+                (string? branchName, bool isDefaultBranch) = GetBranchNameRepoLiteral(qa.RepositoryUrl);
 
                 versionPrerelease = isDefaultBranch || string.IsNullOrEmpty(branchName)
                     ? versionPrerelease
@@ -523,7 +523,7 @@ namespace Firely.Fhir.Packages
 
                 foreach (FhirCiQaRecord qa in qaRecs.OrderBy(qa => qa.BuildDateIso ?? qa.BuildDate))
                 {
-                    (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
+                    (string? branchName, bool isDefaultBranch) = GetBranchNameRepoLiteral(qa.RepositoryUrl);
 
                     string tag = branchName == null
                         ? "current"
@@ -576,7 +576,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="partialRepoLiteral">The partial repository URL.</param>
         /// <returns>The branch name extracted from the repository URL, or null if the branch name cannot be determined.</returns>
-        private static (string? branchName, bool isDefaultBranch) getBranchFromRepo(string? partialRepoLiteral)
+        public static (string? branchName, bool isDefaultBranch) GetBranchNameRepoLiteral(string? partialRepoLiteral)
         {
             if ((partialRepoLiteral == null) ||
                 string.IsNullOrEmpty(partialRepoLiteral))
@@ -856,7 +856,7 @@ namespace Firely.Fhir.Packages
             }
 
             // extract the branch name
-            (string? branchName, bool _) = getBranchFromRepo(qa.RepositoryUrl);
+            (string? branchName, bool _) = GetBranchNameRepoLiteral(qa.RepositoryUrl);
 
             // build the URL
             int igUrlIndex = qa.Url?.IndexOf("/ImplementationGuide/", StringComparison.Ordinal) ?? -1;
@@ -890,7 +890,7 @@ namespace Firely.Fhir.Packages
                 return PackageReference.None;
             }
 
-            (string? branchName, bool isDefaultBranch) = getBranchFromRepo(qa.RepositoryUrl);
+            (string? branchName, bool isDefaultBranch) = GetBranchNameRepoLiteral(qa.RepositoryUrl);
 
             string tag;
             if ((branchName == null) ||

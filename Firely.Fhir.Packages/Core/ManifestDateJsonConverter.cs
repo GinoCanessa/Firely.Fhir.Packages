@@ -14,7 +14,7 @@ namespace Firely.Fhir.Packages
 
         public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
         {
-            string? dateString = reader.ReadAsString();
+            string? dateString = reader.Value?.ToString();
 
             if (string.IsNullOrEmpty(dateString))
             {
