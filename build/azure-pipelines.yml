@@ -34,8 +34,9 @@ stages:
         propsFile: 'Firely.Fhir.Packages.props'
         packageArtifacts: true
         restoreDependencies: true
-        nuGetServiceConnections: GitHubPackageGetFeed
-        nuGetSources: --source https://nuget.pkg.github.com/FirelyTeam/index.json
+        # we shouldn't use a private feed since we are public repo
+        # nuGetServiceConnections: GitHubPackageGetFeed
+        # nuGetSources: --source https://nuget.pkg.github.com/FirelyTeam/index.json
         pool: 
           vmImage: $(vmImage)
     
