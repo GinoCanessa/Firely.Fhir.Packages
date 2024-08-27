@@ -133,7 +133,7 @@ namespace Firely.Fhir.Packages
             }
 
             List<FhirCiQaRecord>? updatedGuideQas = await downloadGuideQAs();
-            List<FhirCiQaRecord>? updatedCoreQas = await downloadCoreQAs();
+            List<FhirCiQaRecord>? updatedCoreQas = await getCoreQAs();
 
             // join our sets together
             FhirCiQaRecord[] updatedQAs = (updatedCoreQas ?? Enumerable.Empty<FhirCiQaRecord>()).Concat(updatedGuideQas ?? Enumerable.Empty<FhirCiQaRecord>()).ToArray();
@@ -221,10 +221,22 @@ namespace Firely.Fhir.Packages
             return qas;
         }
 
-        private async Task<List<FhirCiQaRecord>> downloadCoreQAs()
+        /// <summary>
+        /// Retrieves the list of core quality assurance (QA) records.
+        /// </summary>
+        /// <returns>The list of core QA records.</returns>
+        private async Task<List<FhirCiQaRecord>> getCoreQAs()
         {
-            List<FhirCiQaRecord> qas = new();
+            CiBranchRecord[]? coreBranches = await downloadCoreBranches();
+            return await convertCoreBranchesToQAs(coreBranches);
+        }
 
+        /// <summary>
+        /// Downloads the branch list from the core build.
+        /// </summary>
+        /// <returns>An array of <see cref="CiBranchRecord"/> representing the downloaded branch list, or null if the download fails.</returns>
+        private async Task<CiBranchRecord[]?> downloadCoreBranches()
+        {
             // download the branch list from the core build
             HttpRequestMessage request = new HttpRequestMessage()
             {
@@ -244,16 +256,26 @@ namespace Firely.Fhir.Packages
 
             if (statusCode != System.Net.HttpStatusCode.OK)
             {
-                return qas;
+                return null;
             }
 
             string json = await response.Content.ReadAsStringAsync();
             if (string.IsNullOrEmpty(json))
             {
-                return qas;
+                return null;
             }
 
-            CiBranchRecord[]? coreBranches = JsonConvert.DeserializeObject<CiBranchRecord[]>(json);
+            return JsonConvert.DeserializeObject<CiBranchRecord[]>(json);
+        }
+
+        /// <summary>
+        /// Converts an array of core branches to a list of FhirCiQaRecord objects.
+        /// </summary>
+        /// <param name="coreBranches">The array of core branches.</param>
+        /// <returns>A list of FhirCiQaRecord objects.</returns>
+        private async Task<List<FhirCiQaRecord>> convertCoreBranchesToQAs(CiBranchRecord[]? coreBranches)
+        {
+            List<FhirCiQaRecord> qas = new();
 
             if (coreBranches == null)
             {
@@ -271,7 +293,7 @@ namespace Firely.Fhir.Packages
                 }
 
                 // download the version.info for this branch
-                request = new HttpRequestMessage()
+                HttpRequestMessage request = new HttpRequestMessage()
                 {
                     Method = HttpMethod.Get,
                     RequestUri = new Uri(_ciBranchUri, ciBranchRec.Url + "version.info"),
@@ -284,8 +306,8 @@ namespace Firely.Fhir.Packages
                     },
                 };
 
-                response = await _httpClient.SendAsync(request);
-                statusCode = response.StatusCode;
+                HttpResponseMessage response = await _httpClient.SendAsync(request);
+                System.Net.HttpStatusCode statusCode = response.StatusCode;
 
                 if (statusCode != System.Net.HttpStatusCode.OK)
                 {
