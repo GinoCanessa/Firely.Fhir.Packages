@@ -859,15 +859,24 @@ namespace Firely.Fhir.Packages
             (string? branchName, bool _) = GetBranchNameRepoLiteral(qa.RepositoryUrl);
 
             // build the URL
-            int igUrlIndex = qa.Url?.IndexOf("/ImplementationGuide/", StringComparison.Ordinal) ?? -1;
-            string url = igUrlIndex == -1 ? qa.Url! : qa.Url!.Substring(0, igUrlIndex);
+            int igUrlIndex = qa.RepositoryUrl?.IndexOf("/qa.json", StringComparison.Ordinal) ?? -1;
+            string url = igUrlIndex == -1 ? qa.RepositoryUrl! : qa.RepositoryUrl!.Substring(0, igUrlIndex);
 
-            // if we have a branch name, insert it into the URL
-            url += branchName switch
+            url += url.EndsWith("/")
+                ? "package.tgz"
+                : "/package.tgz";
+
+            if (!url.StartsWith("http"))
             {
-                null => "/package.tgz",
-                _ => "/branches/" + branchName + "/package.tgz",
-            };
+                if (url.StartsWith("HL7/fhir/", StringComparison.OrdinalIgnoreCase))
+                {
+                    url = "https://build.fhir.org/" + url;
+                }
+                else
+                {
+                    url = "https://build.fhir.org/ig/" + url;
+                }
+            }
 
             // download data
             return await _httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
