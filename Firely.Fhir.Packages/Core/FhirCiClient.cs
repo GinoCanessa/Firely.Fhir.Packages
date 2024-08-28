@@ -1064,6 +1064,12 @@ namespace Firely.Fhir.Packages
                 return;
             }
 
+            if (isInstalled)
+            {
+                // need to delete the existing content
+                await cache.Delete(taggedReference);
+            }
+
             // download happens via the resolved version
             byte[] data = await downloadPackage(resolvedReference, qa);
 

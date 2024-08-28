@@ -58,7 +58,7 @@ namespace Firely.Fhir.Packages
         public async Task Delete(PackageReference reference)
 #pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            var target = PackageContentFolder(reference);
+            var target = packageRootFolder(reference);
             if (!Directory.Exists(target))
             {
                 return;
