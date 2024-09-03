@@ -7,8 +7,8 @@ parameters:
   useVersionSuffix: true # if true, the build number will be added as or to the existing version suffix
   propsFile: '' # used for versionSuffix, if not empty, the versionSuffix will be read from the props file
   restoreDependencies: false
-  nuGetServiceConnections: #required when restoreDependies = true
-  nuGetSources: #required when restoreDependies = true
+  nuGetServiceConnections: #service connections to the additional nuget feeds
+  nuGetSources: #additional nuget sources, next to the default nuget.org feed  
   packageArtifacts: false
   publishArtifacts: false
   packageArtifactName: 'NuGetPackages'
