@@ -34,7 +34,7 @@ stages:
         propsFile: 'Firely.Fhir.Packages.props'
         packageArtifacts: true
         restoreDependencies: true
-        # we shouldn't use a private feed since we are public repo
+        # we shouldn't use a private feed since we are a public repo
         # nuGetServiceConnections: GitHubPackageGetFeed
         # nuGetSources: --source https://nuget.pkg.github.com/FirelyTeam/index.json
         pool: 
