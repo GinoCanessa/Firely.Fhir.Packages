@@ -65,20 +65,17 @@ namespace Firely.Fhir.Packages
         /// <returns>The package reference of the highest 'latest' version of the package and the server it was found on.</returns>
         public static async ValueTask<(PackageReference, IPackageServer?)> GetLatest(this IEnumerable<IPackageServer> servers, string name, bool stable = false)
         {
-            ConcurrentBag<(PackageReference pr, IPackageServer server)> latestRecs = new();
+            List<(PackageReference pr, IPackageServer server)> latestRecs = new();
 
-            IEnumerable<Task> tasks = servers.Select(async server =>
+            foreach (IPackageServer server in servers)
             {
-                PackageReference pr = await server.GetLatest(name, stable);
+                PackageReference pr = await server.GetLatest(name);
                 if (pr == PackageReference.None)
                 {
-                    return;
+                    continue;
                 }
-
-                latestRecs.Append((pr, server));
-            });
-
-            await Task.WhenAll(tasks);
+                latestRecs.Add((pr, server));
+            }
 
             if (latestRecs.Count == 0)
             {
