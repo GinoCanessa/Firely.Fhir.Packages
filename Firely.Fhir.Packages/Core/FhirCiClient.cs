@@ -285,84 +285,100 @@ namespace Firely.Fhir.Packages
             // traverse the core branches to build their records
             foreach (CiBranchRecord ciBranchRec in coreBranches)
             {
-                if ((ciBranchRec.Name == null) ||
-                    string.IsNullOrEmpty(ciBranchRec.Name) ||
-                    string.IsNullOrEmpty(ciBranchRec.Url))
+                FhirCiQaRecord? qaRec = await qaRecForCiBranch(ciBranchRec);
+                if (qaRec == null)
                 {
                     continue;
                 }
 
-                // download the version.info for this branch
-                HttpRequestMessage request = new HttpRequestMessage()
-                {
-                    Method = HttpMethod.Get,
-                    RequestUri = new Uri(_ciBranchUri, ciBranchRec.Url + "version.info"),
-                    Headers =
-                    {
-                        Accept =
-                        {
-                            new MediaTypeWithQualityHeaderValue("text/plain"),
-                        },
-                    },
-                };
-
-                HttpResponseMessage response = await _httpClient.SendAsync(request);
-                System.Net.HttpStatusCode statusCode = response.StatusCode;
-
-                if (statusCode != System.Net.HttpStatusCode.OK)
-                {
-                    continue;
-                }
-
-                string contents = await response.Content.ReadAsStringAsync();
-
-                // grab the contents we can out of the version.info file
-                parseVersionInfoIni(
-                    contents,
-                    out string ciFhirVersion,
-                    out string ciVersion,
-                    out string ciBuildId,
-                    out DateTimeOffset? ciBuildDate);
-
-                string packageId = $"hl7.fhir.r{ciFhirVersion.Split('.').First()}.core";
-
-                if (ciBranchRec.Name == "master/")
-                {
-                    // build a QA record for the main branch
-                    qas.Add(new()
-                    {
-                        Url = "https://build.fhir.org",
-                        Name = "FHIR Core " + ciFhirVersion,
-                        Title = "FHIR Core build",
-                        Status = "draft",
-                        PackageId = packageId,
-                        PackageVersion = ciVersion,
-                        BuildDate = ciBuildDate,
-                        BuildDateIso = ciBuildDate,
-                        FhirVersion = ciFhirVersion,
-                        RepositoryUrl = "HL7/fhir/branches/master/qa.json"
-                    });
-                }
-                else
-                {
-                    // build a QA record for this branch
-                    qas.Add(new()
-                    {
-                        Url = "https://build.fhir.org/branches/" + ciBranchRec.Name.Substring(0, ciBranchRec.Name.Length - 1),
-                        Name = "FHIR Core " + ciFhirVersion + " branch: " + ciBranchRec.Name,
-                        Title = "FHIR Core build",
-                        Status = "draft",
-                        PackageId = packageId,
-                        PackageVersion = ciVersion,
-                        BuildDate = ciBuildDate,
-                        BuildDateIso = ciBuildDate,
-                        FhirVersion = ciFhirVersion,
-                        RepositoryUrl = $"HL7/fhir/branches/{ciBranchRec.Name}/qa.json"
-                    });
-                }
+                qas.Add(qaRec);
             }
 
             return qas;
+        }
+
+        /// <summary>
+        /// Retrieves the QA record for a given CI branch.
+        /// </summary>
+        /// <param name="ciBranchRec">The CI branch record.</param>
+        /// <returns>The QA record for the CI branch, or null if the branch record is invalid or the version.info file cannot be downloaded.</returns>
+        private async Task<FhirCiQaRecord?> qaRecForCiBranch(CiBranchRecord ciBranchRec)
+        {
+            if ((ciBranchRec.Name == null) ||
+                string.IsNullOrEmpty(ciBranchRec.Name) ||
+                string.IsNullOrEmpty(ciBranchRec.Url))
+            {
+                return null;
+            }
+
+            // download the version.info for this branch
+            HttpRequestMessage request = new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri(_ciBranchUri, ciBranchRec.Url + "version.info"),
+                Headers =
+                {
+                    Accept =
+                    {
+                        new MediaTypeWithQualityHeaderValue("text/plain"),
+                    },
+                },
+            };
+
+            HttpResponseMessage response = await _httpClient.SendAsync(request);
+            System.Net.HttpStatusCode statusCode = response.StatusCode;
+
+            if (statusCode != System.Net.HttpStatusCode.OK)
+            {
+                return null;
+            }
+
+            string contents = await response.Content.ReadAsStringAsync();
+
+            // grab the contents we can out of the version.info file
+            parseVersionInfoIni(
+                contents,
+                out string ciFhirVersion,
+                out string ciVersion,
+                out string ciBuildId,
+                out DateTimeOffset? ciBuildDate);
+
+            string packageId = $"hl7.fhir.r{ciFhirVersion.Split('.').First()}.core";
+
+            if (ciBranchRec.Name == "master/")
+            {
+                // build a QA record for the main branch
+                return new()
+                {
+                    Url = "https://build.fhir.org",
+                    Name = "FHIR Core " + ciFhirVersion,
+                    Title = "FHIR Core build",
+                    Status = "draft",
+                    PackageId = packageId,
+                    PackageVersion = ciVersion,
+                    BuildDate = ciBuildDate,
+                    BuildDateIso = ciBuildDate,
+                    FhirVersion = ciFhirVersion,
+                    RepositoryUrl = "HL7/fhir/branches/master/qa.json"
+                };
+            }
+            else
+            {
+                // build a QA record for this branch
+                return new()
+                {
+                    Url = "https://build.fhir.org/branches/" + ciBranchRec.Name.Substring(0, ciBranchRec.Name.Length - 1),
+                    Name = "FHIR Core " + ciFhirVersion + " branch: " + ciBranchRec.Name,
+                    Title = "FHIR Core build",
+                    Status = "draft",
+                    PackageId = packageId,
+                    PackageVersion = ciVersion,
+                    BuildDate = ciBuildDate,
+                    BuildDateIso = ciBuildDate,
+                    FhirVersion = ciFhirVersion,
+                    RepositoryUrl = $"HL7/fhir/branches/{ciBranchRec.Name}/qa.json"
+                };
+            }
         }
 
         /// <summary>Gets local version information.</summary>
