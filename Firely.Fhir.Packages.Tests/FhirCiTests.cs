@@ -140,9 +140,9 @@ namespace Firely.Fhir.Packages.Tests
         [DataRow("cinc.fhir.ig",            "CommunicationPerson",            "0.4.0-cibuild+20240627-051754Z")]
         [DataRow("cinc.fhir.ig",            "RFphase1",                       "0.3.9-cibuild+20240618-041305Z")]
         [DataRow("ihe.pcc.qedm",            null,                             "3.0.0-comment1+20240805-120740Z")]
-        [DataRow("hl7.fhir.r6.core",        null,                             "6.0.0-ballot1+20240812-015417Z")]
-        [DataRow("hl7.fhir.r6.core",        "current",                        "6.0.0-ballot1+20240812-015417Z")]
-        [DataRow("hl7.fhir.r6.core",        "current$2024-08-gg-remove-maps", "6.0.0-ballot1+20240806-110403Z")]
+        [DataRow("hl7.fhir.r6.core",        null,                             "6.0.0-ballot1+20240812-065417Z")]
+        [DataRow("hl7.fhir.r6.core",        "current",                        "6.0.0-ballot1+20240812-065417Z")]
+        [DataRow("hl7.fhir.r6.core",        "current$2024-08-gg-remove-maps", "6.0.0-ballot1+20240806-160403Z")]
         public async Task TestFhirCiResolve(
             string id,
             string? versionDiscriminator,
@@ -246,6 +246,7 @@ namespace Firely.Fhir.Packages.Tests
                 // package downloads for hl7.fhir.r6.core
                 case "https://build.fhir.org/package.tgz":
                 case "https://build.fhir.org/branches/master/package.tgz":
+                case "https://build.fhir.org/ig/IHE/QEDm/branches/master/package.tgz":
                 case "https://build.fhir.org/branches/2024-08-gg-remove-maps/package.tgz":
                     {
                         return Task.FromResult(EmptyResponse("application/gzip"));
