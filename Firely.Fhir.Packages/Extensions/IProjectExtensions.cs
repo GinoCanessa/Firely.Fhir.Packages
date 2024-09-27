@@ -79,7 +79,7 @@ namespace Firely.Fhir.Packages
             if (manifest != null)
                 throw new Exception($"A Package manifests already exists in this folder.");
 
-            if (!ManifestFile.ValidPackageName(pkgname))
+            if (!ManifestFile.IsValidPackageName(pkgname))
                 throw new Exception($"Invalid package name {pkgname}");
 
             manifest = ManifestFile.Create(pkgname, fhirVersion);

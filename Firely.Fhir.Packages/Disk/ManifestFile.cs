@@ -10,6 +10,7 @@
 #nullable enable
 
 using Hl7.Fhir.Utility;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -48,7 +49,7 @@ namespace Firely.Fhir.Packages
             var manifest = ReadFromFolder(folder);
             if (manifest is null)
             {
-                var name = CleanPackageName(Disk.GetFolderName(folder));
+                var name = SanitizePackageName(Disk.GetFolderName(folder));
                 manifest = Create(name, fhirVersion);
             }
             return manifest;
@@ -150,7 +151,18 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="name">Package name to be checked</param>
         /// <returns>whether a package name is valid  </returns>
+        [Obsolete("Use IsValidPackageName instead")]
         public static bool ValidPackageName(string name)
+        {
+            return IsValidPackageName(name);
+        }
+
+        /// <summary>
+        /// Checks whether a package name is valid  
+        /// </summary>
+        /// <param name="name">Package name to be checked</param>
+        /// <returns>whether a package name is valid  </returns>
+        public static bool IsValidPackageName(string name)
         {
             char[] invalidchars = new char[] { '/', '\\' };
             int i = name.IndexOfAny(invalidchars);
@@ -163,14 +175,28 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        /// <remarks>Package names can only contain [A-Za-z], so this function will strip out any characters
+        /// <remarks>Package names can only contain [a-z], so this function will first lower all upper case characters and then strip out any characters
         /// not within that range.</remarks>
+        [Obsolete("Use SanitizePackageName instead")]
         public static string CleanPackageName(string name)
+        {
+            return SanitizePackageName(name);
+        }
+
+
+        /// <summary>
+        /// Generates an acceptable package name from an chosen name.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        /// <remarks>Package names can only contain [a-z], so this function will first lower all upper case characters and then strip out any characters
+        /// not within that range.</remarks>
+        public static string SanitizePackageName(string name)
         {
             var builder = new StringBuilder();
             foreach (char c in name)
             {
-                if (c >= 'A' && c <= 'z') builder.Append(c);
+                if (c >= 'A' && c <= 'z') builder.Append(char.ToLower(c));
             }
             return builder.ToString();
         }
