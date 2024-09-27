@@ -45,6 +45,16 @@ namespace Firely.Fhir.Packages.Tests
 
         }
 
+        [TestMethod]
+        public void TestSanitizaPackageName()
+        {
+            var name = ManifestFile.SanitizePackageName("My Package");
+            name.Should().Be("mypackage");
+
+            name = ManifestFile.SanitizePackageName("My-Package2233");
+            name.Should().Be("mypackage");
+        }
+
 
         [TestMethod]
         public void TestGeneratingIndexFiles()
