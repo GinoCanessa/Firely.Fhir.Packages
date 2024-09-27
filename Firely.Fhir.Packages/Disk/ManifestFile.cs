@@ -175,7 +175,7 @@ namespace Firely.Fhir.Packages
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        /// <remarks>Package names can only contain [A-Za-z], so this function will strip out any characters
+        /// <remarks>Package names can only contain [a-z], so this function will first lower all upper case characters and then strip out any characters
         /// not within that range.</remarks>
         [Obsolete("Use SanitizePackageName instead")]
         public static string CleanPackageName(string name)
