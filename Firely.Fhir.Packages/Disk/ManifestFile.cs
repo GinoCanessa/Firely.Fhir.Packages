@@ -193,11 +193,10 @@ namespace Firely.Fhir.Packages
         /// not within that range.</remarks>
         public static string SanitizePackageName(string name)
         {
-            name = name.ToLower();
             var builder = new StringBuilder();
             foreach (char c in name)
             {
-                if (c >= 'a' && c <= 'z') builder.Append(c);
+                if (c >= 'A' && c <= 'z') builder.Append(char.ToLower(c));
             }
             return builder.ToString();
         }
