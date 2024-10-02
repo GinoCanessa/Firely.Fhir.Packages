@@ -196,8 +196,7 @@ namespace Firely.Fhir.Packages
             var builder = new StringBuilder();
             foreach (char c in name)
             {
-                if (c >= 'A' && c <= 'Z' && c >= 'a' && c <= 'z')
-                    builder.Append(char.ToLower(c));
+                if (c >= 'A' && c <= 'z') builder.Append(char.ToLower(c));
             }
             return builder.ToString();
         }
